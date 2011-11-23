@@ -5,7 +5,7 @@
       android:versionName="1.0">
     <uses-sdk android:minSdkVersion="8" />
 
-    <application android:icon="@drawable/icon" android:label="@string/app_name">
+    <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true">
         <activity android:name=".MudanewsActivity"
                   android:label="@string/app_name">
             <intent-filter>
@@ -15,6 +15,14 @@
         </activity>
         <activity android:name=".ItemDetailActivity">
         </activity>
+        
+        <receiver android:permission="android.permission.RECEIVE_BOOT_COMPLETED" android:name=".ServiceReceiver">
+             <intent-filter>
+                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                 <category android:name="android.intent.category.DEFAULT" />
+             </intent-filter>
+        </receiver>
+        <service android:enabled="true" android:name=".FetchFeedService"/>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

@@ -3,19 +3,22 @@
  */
 package com.starbug1.android.nudanews;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import com.starbug1.android.nudanews.data.NewsListItem;
 
 import android.app.ProgressDialog;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.util.Xml;
+
+import com.starbug1.android.nudanews.data.DatabaseHelper;
+import com.starbug1.android.nudanews.data.NewsListItem;
 
 /**
  * @author smeghead
@@ -45,13 +48,25 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 	protected NewsListAdapter doInBackground(String... params) {
 		NewsListAdapter result = null;
 		try {
-			URL url = new URL(params[0]);
-			InputStream is = url.openConnection().getInputStream();
-			result = parseXml(is);
+			DatabaseHelper helper = new DatabaseHelper(activity_);
+			final SQLiteDatabase db = helper.getWritableDatabase();
+			Cursor c = db.rawQuery("select title, description, link, source from feeds order by published_at limit 20", null);
+			c.moveToFirst();
+			for (int i = 0, len = c.getCount(); i < len; i++) {
+				NewsListItem item = new NewsListItem();
+				item.setTitle(c.getString(0));
+				item.setDescription(c.getString(1));
+				item.setLink(c.getString(2));
+				item.setSource(c.getString(3));
+				adapter_.add(item);
+				c.moveToNext();
+			}
+			c.close();
+			return adapter_;
 		} catch(Exception e) {
-			e.printStackTrace();
+			Log.e("NewsParserTask", e.getMessage());
+			throw new NewsException("failed to background task.", e);
 		}
-		return result;
 	}
 
 	@Override
@@ -60,7 +75,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 		activity_.setListAdapter(result);
 	}
 
-	private NewsListAdapter parseXml(InputStream is) throws IOException, XmlPullParserException {
+	private NewsListAdapter parseXml(InputStream is) {
 		XmlPullParser parser = Xml.newPullParser();
 		try {
 			parser.setInput(is, null);
@@ -79,6 +94,12 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 								currentItem.setTitle(parser.nextText());
 							} else if (tag.equals("description")) {
 								currentItem.setDescription(parser.nextText());
+							} else if (tag.equals("link")) {
+								currentItem.setLink(parser.nextText());
+							} else if (tag.equals("dc:subject")) {
+								currentItem.setCategory(parser.nextText());
+							} else if (tag.equals("dc:date")) {
+								currentItem.setPublishedAt(parser.nextText());
 							}
 						}
 						break;
@@ -86,16 +107,19 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 						tag = parser.getName();
 						Log.d("NewsParserTask", "<" + tag);
 						if (tag.equals("item")) {
-							adapter_.add(currentItem);
+							Log.d("NewsParserTask", "title:" + currentItem.getTitle());
+							if (currentItem.getTitle().toString().indexOf("［PR］") == -1) {
+								adapter_.add(currentItem);
+							}
 						}
 						break;
 				}
 				eventType = parser.next();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e("NewsParserTask", e.getMessage());
+			throw new NewsException("failed to retrieve rss feed.", e);
 		}
 		return adapter_;
 	}
-
 }
