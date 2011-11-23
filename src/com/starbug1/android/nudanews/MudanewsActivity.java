@@ -5,7 +5,6 @@ import java.util.List;
 
 import android.app.ListActivity;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
@@ -16,7 +15,7 @@ public class MudanewsActivity extends ListActivity {
 	private List<NewsListItem> items_;
 	private NewsListAdapter adapter_;
 	
-	private final ServiceReceiver receiver_ = new ServiceReceiver();
+//	private final ServiceReceiver receiver_ = new ServiceReceiver();
 
     /** Called when the activity is first created. */
     @Override

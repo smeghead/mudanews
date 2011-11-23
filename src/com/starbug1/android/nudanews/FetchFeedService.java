@@ -14,9 +14,6 @@ import java.util.TimerTask;
 
 import org.xmlpull.v1.XmlPullParser;
 
-import com.starbug1.android.nudanews.data.DatabaseHelper;
-import com.starbug1.android.nudanews.data.NewsListItem;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -27,10 +24,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
 import android.os.IBinder;
-import android.text.method.DateTimeKeyListener;
 import android.util.Log;
 import android.util.Xml;
-import android.widget.Toast;
+
+import com.starbug1.android.nudanews.data.DatabaseHelper;
+import com.starbug1.android.nudanews.data.NewsListItem;
 
 /**
  * @author smeghead

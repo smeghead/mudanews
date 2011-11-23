@@ -4,7 +4,6 @@
 package com.starbug1.android.nudanews;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,7 +11,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 /**
  * @author smeghead
@@ -36,19 +34,27 @@ public class NewsDetailActivity extends Activity {
 
 			@Override
 			public void onPageFinished(WebView view, String url) {
+				Log.d("NewsDetailActivity", "onPageFinished url: " + url);
 			}
 
 			@Override
 			public void onPageStarted(WebView view, String url, Bitmap favicon) {
-				if (progresDialog_ != null) {
-					progresDialog_.dismiss();
-				}
+				Log.d("NewsDetailActivity", "onPageStarted url: " + url);
 			}
 			
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView view, String url) {
-				Log.d("NewsDetailActivity", "url: " + url);
+				Log.d("NewsDetailActivity", "shouldOverrideUrlLoading url: " + url);
 				return super.shouldOverrideUrlLoading(view, url);
+			}
+
+			@Override
+			public void onLoadResource(WebView view, String url) {
+				Log.d("NewsDetailActivity", "onLoadResource url: " + url);
+				if (progresDialog_ != null) {
+					progresDialog_.dismiss();
+				}
+				super.onLoadResource(view, url);
 			}
 			
 		});

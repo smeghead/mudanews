@@ -9,6 +9,11 @@ package com.starbug1.android.nudanews;
  */
 public class NewsException extends RuntimeException {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public NewsException() {
 		super();
 		// TODO Auto-generated constructor stub
