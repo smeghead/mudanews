@@ -25,6 +25,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				"  description text not null," +
 				"  category text," +
 				"  published_at datetime," +
+				"  read bool not null default 0," +
 				"  created_at datetime not null" +
 				")"
 			);

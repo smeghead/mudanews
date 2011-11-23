@@ -51,7 +51,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 			DatabaseHelper helper = new DatabaseHelper(activity_);
 			final SQLiteDatabase db = helper.getWritableDatabase();
 
-			Cursor c = db.rawQuery("select title, description, link, source from feeds order by published_at limit 20", null);
+			Cursor c = db.rawQuery("select title, description, link, source from feeds order by published_at limit 30", null);
 			c.moveToFirst();
 			for (int i = 0, len = c.getCount(); i < len; i++) {
 				NewsListItem item = new NewsListItem();
@@ -74,53 +74,5 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 	protected void onPostExecute(NewsListAdapter result) {
 		progresDialog_.dismiss();
 		activity_.setListAdapter(result);
-	}
-
-	private NewsListAdapter parseXml(InputStream is) {
-		XmlPullParser parser = Xml.newPullParser();
-		try {
-			parser.setInput(is, null);
-			int eventType = parser.getEventType();
-			NewsListItem currentItem = null;
-			while (eventType != XmlPullParser.END_DOCUMENT) {
-				String tag = null;
-				switch (eventType) {
-					case XmlPullParser.START_TAG:
-						tag = parser.getName();
-						Log.d("NewsParserTask", ">" + tag);
-						if (tag.equals("item")) {
-							currentItem = new NewsListItem();
-						} else if (currentItem != null) {
-							if (tag.equals("title")) {
-								currentItem.setTitle(parser.nextText());
-							} else if (tag.equals("description")) {
-								currentItem.setDescription(parser.nextText());
-							} else if (tag.equals("link")) {
-								currentItem.setLink(parser.nextText());
-							} else if (tag.equals("dc:subject")) {
-								currentItem.setCategory(parser.nextText());
-							} else if (tag.equals("dc:date")) {
-								currentItem.setPublishedAt(parser.nextText());
-							}
-						}
-						break;
-					case XmlPullParser.END_TAG:
-						tag = parser.getName();
-						Log.d("NewsParserTask", "<" + tag);
-						if (tag.equals("item")) {
-							Log.d("NewsParserTask", "title:" + currentItem.getTitle());
-							if (currentItem.getTitle().toString().indexOf("［PR］") == -1) {
-								adapter_.add(currentItem);
-							}
-						}
-						break;
-				}
-				eventType = parser.next();
-			}
-		} catch (Exception e) {
-			Log.e("NewsParserTask", e.getMessage());
-			throw new NewsException("failed to retrieve rss feed.", e);
-		}
-		return adapter_;
 	}
 }

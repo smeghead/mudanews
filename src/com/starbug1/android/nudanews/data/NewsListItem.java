@@ -9,7 +9,7 @@ public class NewsListItem {
 	private String title_;
 	private String description_;
 	private String category_;
-	private String publishedAt_;
+	private Long publishedAt_;
 	private String link_;
 	private String source_;
 	
@@ -17,7 +17,7 @@ public class NewsListItem {
 		title_ = "";
 		description_ = "";
 		category_ = "";
-		publishedAt_ = "";
+		publishedAt_ = 0l;
 		link_ = "";
 	}
 
@@ -45,11 +45,11 @@ public class NewsListItem {
 		category_ = category;
 	}
 
-	public String getPublishedAt() {
+	public long getPublishedAt() {
 		return publishedAt_;
 	}
 
-	public void setPublishedAt(String publishedAt) {
+	public void setPublishedAt(long publishedAt) {
 		publishedAt_ = publishedAt;
 	}
 
