@@ -30,10 +30,10 @@ public class MudanewsActivity extends ListActivity {
         NewsParserTask task = new NewsParserTask(this, adapter_);
         task.execute("http://labaq.com/index.rdf");
         
-//        // サービスを開始
-//        startService(new Intent(this, FetchFeedService.class));
-//        IntentFilter filter = new IntentFilter(FetchFeedService.ACTION);
-//        registerReceiver(receiver_, filter);
+        // サービスを開始
+        startService(new Intent(this, FetchFeedService.class));
+        IntentFilter filter = new IntentFilter(FetchFeedService.ACTION);
+        registerReceiver(receiver_, filter);
     }
     
     @Override

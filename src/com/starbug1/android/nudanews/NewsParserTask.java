@@ -37,7 +37,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 	@Override
 	protected void onPreExecute() {
 		progresDialog_ = new ProgressDialog(activity_);
-		progresDialog_.setMessage("Now Loading...");
+		progresDialog_.setMessage("読み込み中...");
 		progresDialog_.show();
 	}
 	
@@ -50,6 +50,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, NewsListAdapter> 
 		try {
 			DatabaseHelper helper = new DatabaseHelper(activity_);
 			final SQLiteDatabase db = helper.getWritableDatabase();
+
 			Cursor c = db.rawQuery("select title, description, link, source from feeds order by published_at limit 20", null);
 			c.moveToFirst();
 			for (int i = 0, len = c.getCount(); i < len; i++) {

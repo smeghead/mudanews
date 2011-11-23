@@ -29,6 +29,7 @@ public class NewsDetailActivity extends Activity {
 		Log.d("NewsDetailActivity", "url: " + url);
 		view_ = (WebView) findViewById(R.id.webView1);
 		view_.setWebViewClient(new WebViewClient());
+		view_.getSettings().setJavaScriptEnabled(true);
 		view_.loadUrl(url);
 	}
 

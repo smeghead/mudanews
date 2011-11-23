@@ -16,6 +16,9 @@ import org.xmlpull.v1.XmlPullParser;
 import com.starbug1.android.nudanews.data.DatabaseHelper;
 import com.starbug1.android.nudanews.data.NewsListItem;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -45,18 +48,34 @@ public class FetchFeedService extends Service {
 			public void run() {
 				handler.post(new Runnable() {
 					public void run() {
+						int count = 0;
 						try {
 							URL url = new URL(FEED);
 							InputStream is = url.openConnection().getInputStream();
 							List<NewsListItem> list = parseXml(is);
-							registerNews(list);
+							count = registerNews(list);
 						} catch(Exception e) {
 							Log.e("NewsParserTask", e.getMessage());
 							throw new NewsException("failed to background task.", e);
 						}
 						
-						Toast.makeText(FetchFeedService.this, "無駄新聞の記事を更新しました",
-								Toast.LENGTH_SHORT).show();
+						if (count > 0) {
+//							Toast.makeText(FetchFeedService.this, "無駄新聞の記事を更新しました",
+//									Toast.LENGTH_SHORT).show();
+							NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+							Notification notification = new Notification(
+									android.R.drawable.btn_default, 
+									"ニュースです", 
+									System.currentTimeMillis());
+							Intent intent = new Intent(getApplicationContext(), MudanewsActivity.class);
+							PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+							notification.setLatestEventInfo(
+									getApplicationContext(), 
+									"無駄新聞", 
+									String.valueOf(count) + "件のニュースが更新されました",
+									contentIntent);
+							manager.notify(R.string.app_name, notification);
+						}
 					}
 
 				});
@@ -125,12 +144,13 @@ public class FetchFeedService extends Service {
 		return list;
 	}
 
-	private void registerNews(List<NewsListItem> list) {
+	private int registerNews(List<NewsListItem> list) {
+		int registerCount = 0;
 		DatabaseHelper helper = new DatabaseHelper(this);
 		final SQLiteDatabase db = helper.getWritableDatabase();
 		Date now = new Date();
 		for (NewsListItem item : list) {
-			Cursor c = db.rawQuery("select count(id) from feeds where title = ? and source = ?", new String[]{item.getTitle(), item.getSource()});
+			Cursor c = db.rawQuery("select id from feeds where title = ? and source = ?", new String[]{item.getTitle(), item.getSource()});
 			int count = c.getCount();
 			c.close();
 			if (count > 0) continue; //同じソースで同じタイトルがあったら、取り込まない。
@@ -144,7 +164,9 @@ public class FetchFeedService extends Service {
 	        values.put("published_at", item.getPublishedAt());
 	        values.put("created_at", now.getTime());
 	        db.insert("feeds", null, values);
+	        registerCount++;
 		}
+		return registerCount;
 	}
 
 }
