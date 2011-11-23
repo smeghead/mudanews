@@ -7,6 +7,8 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ListView;
 
 import com.starbug1.android.nudanews.data.NewsListItem;
 
@@ -32,5 +34,13 @@ public class MudanewsActivity extends ListActivity {
 //        startService(new Intent(this, FetchFeedService.class));
 //        IntentFilter filter = new IntentFilter(FetchFeedService.ACTION);
 //        registerReceiver(receiver_, filter);
+    }
+    
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        NewsListItem item = items_.get(position);
+        Intent intent = new Intent(this, NewsDetailActivity.class);
+        intent.putExtra("link", item.getLink());
+        startActivity(intent);
     }
 }

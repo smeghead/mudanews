@@ -23,6 +23,7 @@
              </intent-filter>
         </receiver>
         <service android:enabled="true" android:name=".FetchFeedService"/>
+        <activity android:name="NewsDetailActivity"></activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
