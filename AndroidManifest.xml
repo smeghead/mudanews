@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.starbug1.android.nudanews"
+      package="com.starbug1.android.mudanews"
       android:versionCode="1"
       android:versionName="1.0">
     <uses-sdk android:minSdkVersion="8" />
@@ -16,14 +16,14 @@
         <activity android:name=".ItemDetailActivity">
         </activity>
         
-        <receiver android:permission="android.permission.RECEIVE_BOOT_COMPLETED" android:name=".ServiceReceiver">
+        <receiver android:permission="android.permission.RECEIVE_BOOT_COMPLETED" android:name="com.starbug1.android.mudanews.ServiceReceiver">
              <intent-filter>
                  <action android:name="android.intent.action.BOOT_COMPLETED"/>
                  <category android:name="android.intent.category.DEFAULT" />
              </intent-filter>
         </receiver>
-        <service android:enabled="true" android:name=".FetchFeedService"/>
-        <activity android:name="NewsDetailActivity"></activity>
+        <service android:enabled="true" android:name="com.starbug1.android.mudanews.FetchFeedService"/>
+        <activity android:name="com.starbug1.android.mudanews.NewsDetailActivity"></activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
