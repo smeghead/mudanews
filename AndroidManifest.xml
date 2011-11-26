@@ -22,7 +22,7 @@
                  <category android:name="android.intent.category.DEFAULT" />
              </intent-filter>
         </receiver>
-        <service android:enabled="true" android:name="com.starbug1.android.mudanews.FetchFeedService"/>
+        <service android:enabled="true" android:name="com.starbug1.android.mudanews.FetchFeedService" />
         <activity android:name="com.starbug1.android.mudanews.NewsDetailActivity"></activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />

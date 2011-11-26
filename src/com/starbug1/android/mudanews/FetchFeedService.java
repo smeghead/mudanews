@@ -22,10 +22,12 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Xml;
+import android.widget.Toast;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
@@ -37,6 +39,7 @@ import com.starbug1.android.mudanews.R;
  */
 public class FetchFeedService extends Service {
 	public static final String ACTION = "mudanews fetch feed Service";
+	static final String TAG = "FetchFeedService";
 	
 	public void onStart(Intent intent, int startId) {
 		// タイマの設定
@@ -47,14 +50,7 @@ public class FetchFeedService extends Service {
 			public void run() {
 				handler.post(new Runnable() {
 					public void run() {
-						int count = 0;
-						try {
-							count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
-							count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
-						} catch(Exception e) {
-							Log.e("NewsParserTask", e.getMessage());
-							throw new NewsException("failed to background task.", e);
-						}
+						int count = updateFeeds();
 						
 						if (count > 0) {
 							NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -79,13 +75,16 @@ public class FetchFeedService extends Service {
 		super.onStart(intent, startId);
 	}
 
-	 /* (non-Javadoc)
-	 * @see android.app.Service#onBind(android.content.Intent)
-	 */
-	@Override
-	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public int updateFeeds() {
+		int count = 0;
+		try {
+			count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
+			count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
+		} catch(Exception e) {
+			Log.e("NewsParserTask", e.toString());
+			throw new NewsException("failed to background task.", e);
+		}
+		return count;
 	}
 
 	private List<NewsListItem> parseXml(String source, String urlString) {
@@ -194,4 +193,34 @@ public class FetchFeedService extends Service {
 		return registerCount;
 	}
 
+    public class FetchFeedServiceLocalBinder extends Binder {
+        //サービスの取得
+        FetchFeedService getService() {
+            return FetchFeedService.this;
+        }
+    }
+    //Binderの生成
+    private final IBinder mBinder = new FetchFeedServiceLocalBinder();
+ 
+    @Override
+    public IBinder onBind(Intent intent) {
+        Toast.makeText(this, "MyService#onBind"+ ": " + intent, Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "onBind" + ": " + intent);
+        return mBinder;
+    }
+ 
+    @Override
+    public void onRebind(Intent intent){
+        Toast.makeText(this, "MyService#onRebind"+ ": " + intent, Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "onRebind" + ": " + intent);
+    }
+ 
+    @Override
+    public boolean onUnbind(Intent intent){
+        Toast.makeText(this, "MyService#onUnbind"+ ": " + intent, Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "onUnbind" + ": " + intent);
+ 
+        //onUnbindをreturn trueでoverrideすると次回バインド時にonRebildが呼ばれる
+        return true;
+    }
 }
