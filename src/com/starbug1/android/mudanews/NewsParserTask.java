@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.GridView;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.More;
@@ -86,7 +87,9 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 			adapter_.add(item);
 		}
 		if (page_ == 0) {
-			activity_.setListAdapter(adapter_);
+			GridView view = (GridView) activity_.findViewById(R.id.grid);
+			view.setAdapter(adapter_);
+//			activity_.setListAdapter(adapter_);
 		}
 	}
 }

@@ -3,6 +3,7 @@ package com.starbug1.android.mudanews;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
@@ -13,17 +14,21 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.GridView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.starbug1.android.mudanews.data.More;
 import com.starbug1.android.mudanews.data.NewsListItem;
+import com.starbug1.android.mudanews.utils.FileDownloader;
 
-public class MudanewsActivity extends ListActivity {
+public class MudanewsActivity extends Activity {
 	private List<NewsListItem> items_;
 	private NewsListAdapter adapter_;
 	private int page_ = 0;
@@ -34,7 +39,7 @@ public class MudanewsActivity extends ListActivity {
 	final Handler handler_ = new Handler();
 	private ProgressDialog progresDialog_;
 
-	private ServiceConnection mConnection = new ServiceConnection() {
+	private ServiceConnection connection_ = new ServiceConnection() {
 	    public void onServiceConnected(ComponentName className, IBinder service) {
 	        // サービスにはIBinder経由で#getService()してダイレクトにアクセス可能
 	        fetchFeedService_ = ((FetchFeedService.FetchFeedServiceLocalBinder)service).getService();
@@ -42,19 +47,19 @@ public class MudanewsActivity extends ListActivity {
 	 
 	    public void onServiceDisconnected(ComponentName className) {
 	        fetchFeedService_ = null;
-	        Toast.makeText(MudanewsActivity.this, "Activity:onServiceDisconnected",
-	                Toast.LENGTH_SHORT).show();
+//	        Toast.makeText(MudanewsActivity.this, "Activity:onServiceDisconnected",
+//	                Toast.LENGTH_SHORT).show();
 	    }
 	};
 	void doBindService() {
 	    bindService(new Intent(MudanewsActivity.this,
-	            FetchFeedService.class), mConnection, Context.BIND_AUTO_CREATE);
+	            FetchFeedService.class), connection_, Context.BIND_AUTO_CREATE);
 	    isBound_ = true;
 	}
 	 
 	void doUnbindService() {
 	    if (isBound_) {
-	        unbindService(mConnection);
+	        unbindService(connection_);
 	        isBound_ = false;
 	    }
 	}
@@ -65,11 +70,41 @@ public class MudanewsActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+//		if (savedInstanceState != null) {
+//			updateList();
+//			return;
+//		}
+
+//        try {
+//            String fileName = FileDownloader.download("http://blog.starbug1.com/favicon.ico");
+//            Log.d("MudanewsActivity", "download success:" + fileName);
+//        } catch (AppException e) {
+//            Log.e("MudanewsActivity", e.getMessage());
+//        }
         doBindService();
         
         page_ = 0;
         items_ = new ArrayList<NewsListItem>();
         adapter_ = new NewsListAdapter(this, items_);
+        GridView view = (GridView) this.findViewById(R.id.grid);
+        view.setOnItemClickListener(new OnItemClickListener() {
+
+			public void onItemClick(AdapterView<?> adapter, View view, int position,
+					long id) {
+		        NewsListItem item = items_.get(position);
+		        if (item instanceof More) {
+		        	//read more
+		        	items_.remove(position);
+		        	page_++;
+		        	
+		            updateList();
+		        } else {
+		            Intent intent = new Intent(MudanewsActivity.this, NewsDetailActivity.class);
+		            intent.putExtra("link", item.getLink());
+		            startActivity(intent);
+		        }
+			}
+        });
         updateList();
         
 		NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -81,22 +116,21 @@ public class MudanewsActivity extends ListActivity {
         task.execute(String.valueOf(page_));
     }
 
-    @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-        NewsListItem item = items_.get(position);
-        if (item instanceof More) {
-        	//read more
-        	items_.remove(position);
-        	page_++;
-        	
-        	int y = l.getScrollY();
-            updateList();
-        } else {
-            Intent intent = new Intent(this, NewsDetailActivity.class);
-            intent.putExtra("link", item.getLink());
-            startActivity(intent);
-        }
-    }
+//    @Override
+//    protected void onListItemClick(ListView l, View v, int position, long id) {
+//        NewsListItem item = items_.get(position);
+//        if (item instanceof More) {
+//        	//read more
+//        	items_.remove(position);
+//        	page_++;
+//        	
+//            updateList();
+//        } else {
+//            Intent intent = new Intent(this, NewsDetailActivity.class);
+//            intent.putExtra("link", item.getLink());
+//            startActivity(intent);
+//        }
+//    }
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -137,5 +171,9 @@ public class MudanewsActivity extends ListActivity {
 		doUnbindService();
 		
 	}
-    
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+	}
+
 }

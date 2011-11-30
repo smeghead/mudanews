@@ -44,9 +44,9 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			title_ = (TextView)view.findViewById(R.id.item_title);
 			title_.setText(title);
 			
-			String description = item.getDescription().toString();
-			description_ = (TextView)view.findViewById(R.id.item_descr);
-			description_.setText(description);
+//			String description = item.getDescription().toString();
+//			description_ = (TextView)view.findViewById(R.id.item_descr);
+//			description_.setText(description);
 		}
 		return view;
 	}

@@ -48,33 +48,34 @@ public class FetchFeedService extends Service {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				handler.post(new Runnable() {
-					public void run() {
-						int count = updateFeeds();
-						
-						if (count > 0) {
-							NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-							Notification notification = new Notification(
-									android.R.drawable.btn_default, 
-									"ニュースです", 
-									System.currentTimeMillis());
-							Intent intent = new Intent(getApplicationContext(), MudanewsActivity.class);
-							PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
-							notification.setLatestEventInfo(
-									getApplicationContext(), 
-									"無駄新聞", 
-									String.valueOf(count) + "件のニュースが更新されました",
-									contentIntent);
-							manager.notify(R.string.app_name, notification);
-						}
-					}
-
-				});
+				handler.post(fetchFeeds_);
 			}
 		}, 1000, 1000 * 60 * 15);
 		super.onStart(intent, startId);
 	}
 
+	private Runnable fetchFeeds_ = new Runnable() {
+		public void run() {
+			int count = updateFeeds();
+			
+			if (count > 0) {
+				NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+				Notification notification = new Notification(
+						android.R.drawable.btn_default, 
+						"ニュースです", 
+						System.currentTimeMillis());
+				Intent intent = new Intent(getApplicationContext(), MudanewsActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+				notification.setLatestEventInfo(
+						getApplicationContext(), 
+						"無駄新聞", 
+						String.valueOf(count) + "件のニュースが更新されました",
+						contentIntent);
+				manager.notify(R.string.app_name, notification);
+			}
+		}
+	};
+			
 	public int updateFeeds() {
 		int count = 0;
 		try {

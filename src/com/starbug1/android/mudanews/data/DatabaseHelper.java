@@ -2,9 +2,7 @@ package com.starbug1.android.mudanews.data;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteStatement;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -25,11 +23,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				"  description text not null," +
 				"  category text," +
 				"  published_at datetime," +
-				"  read bool not null default 0," +
+				"  deleted bool not null default 0," +
 				"  created_at datetime not null" +
 				")"
 			);
-						
+			db.execSQL(
+				"create table images ( " + 
+				"  id integer primary key," +
+				"  feed_id integer not null," +
+				"  image text," +
+				"  created_at datetime not null" +
+				")"
+			);
+			db.execSQL(
+				"create table view_logs ( " + 
+				"  id integer primary key," +
+				"  feed_id integer not null," +
+				"  created_at datetime not null" +
+				")"
+			);
 			db.setTransactionSuccessful();
 		} finally {
 			db.endTransaction();
