@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:layout_height="wrap_content" 
-    android:layout_width="match_parent" 
-    android:id="@+id/item_container"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-	<LinearLayout
-		android:id="@+id/linearLayout1"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:orientation="vertical" android:minHeight="160px">
-		<TextView
-			android:id="@+id/item_title"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:textSize="18sp" android:lines="3" android:ellipsize="end"/>
-	</LinearLayout>
-</LinearLayout>
+<FrameLayout
+	    android:layout_height="wrap_content" 
+	    android:layout_width="match_parent" 
+	    android:id="@+id/item_container"
+	    xmlns:android="http://schemas.android.com/apk/res/android" android:minHeight="160px">
+    <ImageView android:src="@android:drawable/ic_menu_gallery" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/item_image" android:maxHeight="160px" android:minHeight="160px" android:maxWidth="160px" android:minWidth="160px"></ImageView>
+	<TextView
+		android:id="@+id/item_title"
+		android:textColor="#99ffffff" android:padding="3px" android:background="#99000000" android:textSize="12sp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+</FrameLayout>

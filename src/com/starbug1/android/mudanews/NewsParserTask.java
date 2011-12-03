@@ -53,7 +53,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 			db = helper.getWritableDatabase();
 
 			c = db.rawQuery(
-					"select title, description, link, source " +
+					"select id, title, description, link, source " +
 					"from feeds " + 
 					"order by published_at desc " + 
 					"limit ? " +
@@ -61,12 +61,27 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 			c.moveToFirst();
 			for (int i = 0, len = c.getCount(); i < len; i++) {
 				NewsListItem item = new NewsListItem();
-				item.setTitle(c.getString(0));
-				item.setDescription(c.getString(1));
-				item.setLink(c.getString(2));
-				item.setSource(c.getString(3));
+				item.setId(Integer.parseInt(c.getString(0)));
+				item.setTitle(c.getString(1));
+				item.setDescription(c.getString(2));
+				item.setLink(c.getString(3));
+				item.setSource(c.getString(4));
 				result.add(item);
 				c.moveToNext();
+			}
+			for (NewsListItem item : result) {
+				Cursor cu = null;
+				try {
+					cu = db.rawQuery("select image from images where feed_id = ?", new String[]{String.valueOf(item.getId())});
+					cu.moveToFirst();
+					if (cu.getCount() != 1) {
+						Log.w("NewsParserTask", "no image.");
+						continue;
+					}
+					item.setImage(cu.getBlob(0));
+				} finally {
+					if (cu != null) cu.close();
+				}
 			}
 			//more
 			result.add(new More());

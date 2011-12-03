@@ -26,5 +26,4 @@
         <activity android:name="com.starbug1.android.mudanews.NewsDetailActivity"></activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   </manifest>

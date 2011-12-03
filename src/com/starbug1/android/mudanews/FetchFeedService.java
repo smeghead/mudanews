@@ -3,7 +3,10 @@
  */
 package com.starbug1.android.mudanews;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,6 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -22,16 +27,17 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Xml;
-import android.widget.Toast;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
-import com.starbug1.android.mudanews.R;
 
 /**
  * @author smeghead
@@ -79,8 +85,8 @@ public class FetchFeedService extends Service {
 	public int updateFeeds() {
 		int count = 0;
 		try {
-			count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
-			count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
+			count += registerNews(fetchImage(parseXml("らばQ", "http://labaq.com/index.rdf")));
+			count += registerNews(fetchImage(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf")));
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());
 			throw new NewsException("failed to background task.", e);
@@ -104,7 +110,6 @@ public class FetchFeedService extends Service {
 				switch (eventType) {
 					case XmlPullParser.START_TAG:
 						tag = parser.getName();
-						Log.d("NewsParserTask", ">" + tag);
 						if (tag.equals("item")) {
 							currentItem = new NewsListItem();
 							currentItem.setSource(source);
@@ -117,16 +122,17 @@ public class FetchFeedService extends Service {
 								currentItem.setLink(parser.nextText());
 							} else if (tag.equals("subject")) {
 								currentItem.setCategory(parser.nextText());
+							} else if (tag.equals("encoded")) {
+								String imageUrl = pickupUrl(parser.nextText());
+								currentItem.setImageUrl(imageUrl);
 							} else if (tag.equals("date")) {
 								String dateExp = parser.nextText();
-								Log.d("FetchFeedService", "dateExp:" + dateExp);
 								currentItem.setPublishedAt(parseDate(dateExp));
 							}
 						}
 						break;
 					case XmlPullParser.END_TAG:
 						tag = parser.getName();
-						Log.d("NewsParserTask", "<" + tag);
 						if (tag.equals("item")) {
 							Log.d("NewsParserTask", "title:" + currentItem.getTitle());
 							if (currentItem.getTitle().toString().indexOf("［PR］") == -1) {
@@ -143,6 +149,17 @@ public class FetchFeedService extends Service {
 		}
 		return list;
 	}
+	
+	private String pickupUrl(String src) {
+		Log.d("FetchFeedService", "src: " + src);
+		Pattern p = Pattern.compile("<img.*src=\"([^\"]*)\"");
+		Matcher m = p.matcher(src);
+		if (!m.find()) {
+			return "";
+		}
+		return m.group(1);
+	}
+	
 	private long parseDate(String src) {
 		Date d = null;
 		try {
@@ -166,12 +183,66 @@ public class FetchFeedService extends Service {
 		return 0;
 	}
 
+	private List<NewsListItem> fetchImage(List<NewsListItem> list) {
+		for (NewsListItem item : list) {
+			String imageUrl = item.getImageUrl();
+			if (imageUrl == null || imageUrl.length() == 0) {
+				continue;
+			}
+			URL url;
+			try {
+				url = new URL(imageUrl);
+				InputStream is = url.openConnection().getInputStream();
+				Bitmap image = BitmapFactory.decodeStream(is);
+				
+				int heightOrg = image.getHeight(), widthOrg = image.getWidth();
+				int height = 0, width = 0;
+				int x = 0, y = 0;
+
+				height = width = Math.min(widthOrg, heightOrg);
+				
+				if (heightOrg > widthOrg) {
+					// 縦長
+					y = Math.abs(heightOrg - widthOrg) /  2;
+				} else {
+					//横長
+					x = Math.abs(heightOrg - widthOrg) /  2;
+				}
+				
+		        Matrix matrix = new Matrix(); 
+		        matrix.postScale(160f / width, 160f / height);
+		        Bitmap scaledBitmap = Bitmap.createBitmap(
+		        		image, 
+		        		x, 
+		        		y, 
+		        		width, 
+		        		height, 
+		        		matrix,
+		        		true);
+		        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream);
+		        item.setImage(stream.toByteArray());
+			} catch (MalformedURLException e) {
+				Log.e("FetchFeedService", "failed to get image." + e.getMessage());
+				continue;
+			} catch (IOException e) {
+				Log.e("FetchFeedService", "failed to get image." + e.getMessage());
+				continue;
+			} catch (Exception e) {
+				Log.e("FetchFeedService", "failed to get image." + e.getMessage());
+				continue;
+			}
+		}
+		return list;
+	}
+	
 	private int registerNews(List<NewsListItem> list) {
 		int registerCount = 0;
 		DatabaseHelper helper = new DatabaseHelper(this);
 		final SQLiteDatabase db = helper.getWritableDatabase();
 		Date now = new Date();
 //		db.execSQL("delete from feeds");
+//		db.execSQL("delete from images");
 		
 		for (NewsListItem item : list) {
 			Cursor c = db.rawQuery("select id from feeds where title = ? and source = ?", new String[]{item.getTitle(), item.getSource()});
@@ -187,8 +258,19 @@ public class FetchFeedService extends Service {
 	        values.put("category", item.getCategory());
 	        values.put("published_at", item.getPublishedAt());
 	        values.put("created_at", now.getTime());
-	        db.insert("feeds", null, values);
+	        long id = db.insert("feeds", null, values);
+	        Log.d("FetchFeedService", "feed_id:" + id);
+
 	        registerCount++;
+
+	        if (item.getImage() == null) {
+	        	continue;
+	        }
+	        values = new ContentValues();
+	        values.put("feed_id", id);
+	        values.put("image", item.getImage());
+	        values.put("created_at", now.getTime());
+	        db.insert("images", null, values);
 		}
 		db.close();
 		return registerCount;
@@ -205,20 +287,17 @@ public class FetchFeedService extends Service {
  
     @Override
     public IBinder onBind(Intent intent) {
-        Toast.makeText(this, "MyService#onBind"+ ": " + intent, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onBind" + ": " + intent);
         return mBinder;
     }
  
     @Override
     public void onRebind(Intent intent){
-        Toast.makeText(this, "MyService#onRebind"+ ": " + intent, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onRebind" + ": " + intent);
     }
  
     @Override
     public boolean onUnbind(Intent intent){
-        Toast.makeText(this, "MyService#onUnbind"+ ": " + intent, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onUnbind" + ": " + intent);
  
         //onUnbindをreturn trueでoverrideすると次回バインド時にonRebildが呼ばれる

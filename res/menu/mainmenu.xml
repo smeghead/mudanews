@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/update_feeds" android:title="@string/menu_updated_feeds"></item>
+    <item android:id="@+id/update_feeds" android:title="@string/menu_updated_feeds" android:icon="@android:drawable/ic_menu_rotate"></item>
     
 </menu>

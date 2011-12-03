@@ -70,17 +70,11 @@ public class MudanewsActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-//		if (savedInstanceState != null) {
-//			updateList();
-//			return;
-//		}
+		if (items_ != null) {
+			updateList();
+			return;
+		}
 
-//        try {
-//            String fileName = FileDownloader.download("http://blog.starbug1.com/favicon.ico");
-//            Log.d("MudanewsActivity", "download success:" + fileName);
-//        } catch (AppException e) {
-//            Log.e("MudanewsActivity", e.getMessage());
-//        }
         doBindService();
         
         page_ = 0;
@@ -116,22 +110,6 @@ public class MudanewsActivity extends Activity {
         task.execute(String.valueOf(page_));
     }
 
-//    @Override
-//    protected void onListItemClick(ListView l, View v, int position, long id) {
-//        NewsListItem item = items_.get(position);
-//        if (item instanceof More) {
-//        	//read more
-//        	items_.remove(position);
-//        	page_++;
-//        	
-//            updateList();
-//        } else {
-//            Intent intent = new Intent(this, NewsDetailActivity.class);
-//            intent.putExtra("link", item.getLink());
-//            startActivity(intent);
-//        }
-//    }
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
@@ -146,9 +124,13 @@ public class MudanewsActivity extends Activity {
 		switch (item.getItemId()) {
 		case R.id.update_feeds:
 			items_.clear();
-			progresDialog_ = new ProgressDialog(this);
-			progresDialog_.setMessage("読み込み中...");
-			progresDialog_.show();
+			handler_.post(new Runnable() {
+				public void run() {
+					progresDialog_ = new ProgressDialog(MudanewsActivity.this);
+					progresDialog_.setMessage("読み込み中...");
+					progresDialog_.show();
+				}
+			});
 			new Thread() {
 				@Override
 				public void run() {

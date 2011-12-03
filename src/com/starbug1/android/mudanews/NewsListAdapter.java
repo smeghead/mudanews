@@ -6,10 +6,15 @@ package com.starbug1.android.mudanews;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.starbug1.android.mudanews.data.NewsListItem;
@@ -38,16 +43,25 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			view = inflater_.inflate(R.layout.item_row, null);
 		}
 		
+		Log.d("NewsListAdapter", "position: " + position);
 		NewsListItem item = this.getItem(position);
 		if (item != null) {
 			String title = item.getTitle().toString();
 			title_ = (TextView)view.findViewById(R.id.item_title);
 			title_.setText(title);
-			
-//			String description = item.getDescription().toString();
-//			description_ = (TextView)view.findViewById(R.id.item_descr);
-//			description_.setText(description);
+			view.setTag(item);
+
+			if (item.getImage() != null) {
+				byte[] data = item.getImage();
+				Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
+				ImageView image = (ImageView) view.findViewById(R.id.item_image);
+				image.setImageBitmap(b);
+			} else {
+				ImageView image = (ImageView) view.findViewById(R.id.item_image);
+				image.setVisibility(ImageView.GONE);
+			}
 		}
+		
 		return view;
 	}
 
