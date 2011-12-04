@@ -2,8 +2,7 @@ package com.starbug1.android.mudanews.utils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 
@@ -13,7 +12,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import android.os.Environment;
 import android.util.Log;
 
 import com.starbug1.android.mudanews.AppException;
@@ -36,17 +34,14 @@ public class FileDownloader {
 
 			responseCode = res.getStatusLine().getStatusCode();
 
-			String fileName = "";
-			File SDDirectory = Environment.getExternalStorageDirectory();
+			String content = "";
 			
 			if (responseCode == HttpStatus.SC_OK) {
-				fileName = SDDirectory.getAbsolutePath() + File.separator + String.valueOf(uri.hashCode());
-				Log.d("FileDownloader", "filename:" + fileName);
-				File file = new File(fileName);
 				InputStream is = res.getEntity().getContent();
 				BufferedInputStream in = new BufferedInputStream(is, BUFFER_SIZE);
+				ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 				BufferedOutputStream out = new BufferedOutputStream(
-						new FileOutputStream(file, false), BUFFER_SIZE);
+						byteStream, BUFFER_SIZE);
 
 				byte buf[] = new byte[BUFFER_SIZE];
 				int size = -1;
@@ -55,6 +50,7 @@ public class FileDownloader {
 				}
 				out.flush();
 
+				content = byteStream.toString();
 				out.close();
 				in.close();
 			} else if (responseCode == HttpStatus.SC_NOT_FOUND) {
@@ -62,7 +58,7 @@ public class FileDownloader {
 			} else if (responseCode == HttpStatus.SC_REQUEST_TIMEOUT) {
 				throw new AppException("TIMEOUT");
 			}
-			return fileName;
+			return content;
 		} catch (Exception e) {
 			Log.e("FileDownloader", "failed to download." + e.getMessage());
 			throw new AppException("failed to download.", e);

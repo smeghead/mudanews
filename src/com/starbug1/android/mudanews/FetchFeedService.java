@@ -39,6 +39,7 @@ import android.util.Xml;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
+import com.starbug1.android.mudanews.utils.FileDownloader;
 
 /**
  * @author smeghead
@@ -93,6 +94,7 @@ public class FetchFeedService extends Service {
 		try {
 			count += registerNews(fetchImage(parseXml("らばQ", "http://labaq.com/index.rdf")));
 			count += registerNews(fetchImage(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf")));
+			count += registerNews(fetchImage(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/")));
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());
 			throw new NewsException("failed to background task.", e);
@@ -141,7 +143,8 @@ public class FetchFeedService extends Service {
 						tag = parser.getName();
 						if (tag.equals("item")) {
 							Log.d("NewsParserTask", "title:" + currentItem.getTitle());
-							if (currentItem.getTitle().toString().indexOf("［PR］") == -1) {
+							if (currentItem.getTitle().toString().indexOf("［PR］") == -1
+									&& currentItem.getTitle().toString().indexOf("PR:") == -1) {
 								list.add(currentItem);
 							}
 						}
@@ -193,7 +196,26 @@ public class FetchFeedService extends Service {
 		for (NewsListItem item : list) {
 			String imageUrl = item.getImageUrl();
 			if (imageUrl == null || imageUrl.length() == 0) {
-				continue;
+				try {
+					//GIGAZINE はfeedにimageのURLが無いので直に取得しにいく。
+					String content = FileDownloader.download(item.getLink());
+					Pattern p = Pattern.compile("class=\"preface\"(.*)$", Pattern.DOTALL);
+					Matcher m = p.matcher(content);
+					if (!m.find()) {
+						continue;
+					}
+					String mainPart = m.group(1);
+					Log.d("FetchFeedService", "mainpart: " + mainPart);
+					p = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
+					m = p.matcher(mainPart);
+					if (!m.find()) {
+						continue;
+					}
+					imageUrl = m.group(1);
+				} catch (AppException e) {
+					Log.e("FetchFeedService", "failed to download content.");
+					continue;
+				}
 			}
 			URL url;
 			try {
