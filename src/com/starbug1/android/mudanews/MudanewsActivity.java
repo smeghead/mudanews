@@ -78,9 +78,9 @@ public class MudanewsActivity extends Activity {
 		setContentView(R.layout.main);
 
 		if (items_ != null) {
-			updateList();
+			updateList(true);
 			return;
-		}
+		}	
 
 		doBindService();
 
@@ -98,7 +98,7 @@ public class MudanewsActivity extends Activity {
 					items_.remove(position);
 					page_++;
 
-					updateList();
+					updateList(false);
 				} else {
 					Intent intent = new Intent(MudanewsActivity.this,
 							NewsDetailActivity.class);
@@ -107,13 +107,13 @@ public class MudanewsActivity extends Activity {
 				}
 			}
 		});
-		updateList();
+		updateList(true);
 
 		NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		manager.cancelAll();
 	}
 
-	private void updateList() {
+	private void updateList(boolean initAdd) {
 		WindowManager w = getWindowManager();
 		Display d = w.getDefaultDisplay();
 		int width = d.getWidth();
@@ -124,6 +124,9 @@ public class MudanewsActivity extends Activity {
 		NewsParserTask task = new NewsParserTask(this, adapter_);
 		task.execute(String.valueOf(page_));
 		
+		if (!initAdd) {
+			return;
+		}
 		//admob
 	    // Create the adView
 	    adView_ = new AdView(this, AdSize.BANNER, "a14edaf2bb22e23");
@@ -163,7 +166,9 @@ public class MudanewsActivity extends Activity {
 					handler_.post(new Runnable() {
 						public void run() {
 							progresDialog_.dismiss();
-							updateList();
+							page_ = 0;
+							items_.clear();
+							updateList(false);
 						}
 					});
 				}
