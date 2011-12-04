@@ -80,7 +80,13 @@ public class MudanewsActivity extends Activity {
 		if (items_ != null) {
 			updateList(true);
 			return;
-		}	
+		}
+		new Thread() {
+			@Override
+			public void run() {
+				MudanewsActivity.this.startService(new Intent(MudanewsActivity.this, FetchFeedService.class));
+			}
+		}.start();
 
 		doBindService();
 
@@ -96,7 +102,9 @@ public class MudanewsActivity extends Activity {
 				if (item instanceof More) {
 					// read more
 					items_.remove(position);
-					page_++;
+					if (items_.size() > 0) {
+						page_++;
+					}
 
 					updateList(false);
 				} else {
@@ -155,28 +163,31 @@ public class MudanewsActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.update_feeds:
-			items_.clear();
-			progresDialog_ = new ProgressDialog(MudanewsActivity.this);
-			progresDialog_.setMessage("読み込み中...");
-			progresDialog_.show();
-			new Thread() {
-				@Override
-				public void run() {
-					fetchFeedService_.updateFeeds();
-					handler_.post(new Runnable() {
-						public void run() {
-							progresDialog_.dismiss();
-							page_ = 0;
-							items_.clear();
-							updateList(false);
-						}
-					});
-				}
-			}.start();
+			fetchFeeds();
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	private void fetchFeeds() {
+		items_.clear();
+		progresDialog_ = new ProgressDialog(MudanewsActivity.this);
+		progresDialog_.setMessage("読み込み中...");
+		progresDialog_.show();
+		new Thread() {
+			@Override
+			public void run() {
+				fetchFeedService_.updateFeeds();
+				handler_.post(new Runnable() {
+					public void run() {
+						progresDialog_.dismiss();
+						page_ = 0;
+						items_.clear();
+						updateList(false);
+					}
+				});
+			}
+		}.start();
+	}
 	@Override
 	protected void onDestroy() {
 		adView_.destroy();

@@ -3,7 +3,9 @@
  */
 package com.starbug1.android.mudanews;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -25,6 +27,7 @@ import com.starbug1.android.mudanews.data.NewsListItem;
 public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 	private LayoutInflater inflater_;
 	private TextView title_;
+	private Map<Integer, Bitmap> bitmapCache_ = new HashMap<Integer, Bitmap>();
 
 	public NewsListAdapter(Context context, List<NewsListItem> objects) {
 		super(context, 0, objects);
@@ -54,12 +57,22 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			view.setTag(item);
 
 			if (item.getImage() != null) {
-				byte[] data = item.getImage();
-				Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
+				Bitmap b;
+				Integer key = Integer.valueOf(item.getId());
+				if (bitmapCache_.containsKey(key)) {
+					b = bitmapCache_.get(key);
+				} else {
+					byte[] data = item.getImage();
+					Log.d("NewsListAdapter", "data.length:" + data.length);
+					b = BitmapFactory.decodeByteArray(data, 0, data.length);
+					bitmapCache_.put(key, b);
+				}
 				ImageView image = (ImageView) view
 						.findViewById(R.id.item_image);
+				image.setImageDrawable(null);
 				image.setImageBitmap(b);
 			} else {
+				Log.d("NewsListAdapter", "item more? id:" + item.getId());
 				ImageView image = (ImageView) view
 						.findViewById(R.id.item_image);
 				image.setVisibility(ImageView.GONE);
@@ -67,6 +80,12 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 		}
 
 		return view;
+	}
+
+	@Override
+	public void remove(NewsListItem object) {
+		Log.d("NewsListAdapter", "remove");
+		super.remove(object);
 	}
 
 }

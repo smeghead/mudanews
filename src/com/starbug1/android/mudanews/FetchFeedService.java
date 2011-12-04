@@ -30,11 +30,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.Xml;
 
@@ -57,6 +56,7 @@ public class FetchFeedService extends Service {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
+				Log.d("FetchFeedService", "fetch feeds start.....");
 				handler.post(fetchFeeds_);
 			}
 		}, 1000, 1000 * 60 * 15);
@@ -73,12 +73,10 @@ public class FetchFeedService extends Service {
 						R.drawable.icon, 
 						"ニュースです", 
 						System.currentTimeMillis());
-				notification.defaults |= Notification.DEFAULT_VIBRATE;
-				Uri sound = Uri.parse(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI);
-				notification.sound = sound;
+				notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
 				
-				Intent intent = new Intent(getApplicationContext(), MudanewsActivity.class);
-				PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+				Intent intent = new Intent(FetchFeedService.this, MudanewsActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(FetchFeedService.this, 0, intent, 0);
 				notification.setLatestEventInfo(
 						getApplicationContext(), 
 						"無駄新聞", 
