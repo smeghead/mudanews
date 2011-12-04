@@ -92,9 +92,23 @@ public class FetchFeedService extends Service {
 	public int updateFeeds() {
 		int count = 0;
 		try {
-			count += registerNews(fetchImage(parseXml("らばQ", "http://labaq.com/index.rdf")));
-			count += registerNews(fetchImage(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf")));
-			count += registerNews(fetchImage(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/")));
+			// 全てのフィードを取得すると処理が長すぎて応答無しになるので、1度に1つだけを取得する
+			int random = (int) Math.round(Math.random() * 2);
+			switch (random) {
+			case 0:
+				Log.d("FetchFeedService", "fetch らばQ");
+				count += registerNews(fetchImage(parseXml("らばQ", "http://labaq.com/index.rdf")));
+				break;
+			case 1:
+				Log.d("FetchFeedService", "fetch 痛いニュース");
+				count += registerNews(fetchImage(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf")));
+				break;
+			case 2:
+				Log.d("FetchFeedService", "fetch GIGAZINE");
+				count += registerNews(fetchImage(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/")));
+				break;
+			}
+			Log.d("FetchFeedService", "fetched");
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());
 			throw new NewsException("failed to background task.", e);
@@ -106,14 +120,15 @@ public class FetchFeedService extends Service {
 		XmlPullParser parser = Xml.newPullParser();
 		List<NewsListItem> list = new ArrayList<NewsListItem>(20);
 		
+		InputStream is = null;
 		try {
 			URL url = new URL(urlString);
-			InputStream is = url.openConnection().getInputStream();
+			is = url.openConnection().getInputStream();
 
 			parser.setInput(is, null);
 			int eventType = parser.getEventType();
 			NewsListItem currentItem = null;
-			while (eventType != XmlPullParser.END_DOCUMENT) {
+			DOC: while (eventType != XmlPullParser.END_DOCUMENT) {
 				String tag = null;
 				switch (eventType) {
 					case XmlPullParser.START_TAG:
@@ -146,6 +161,9 @@ public class FetchFeedService extends Service {
 							if (currentItem.getTitle().toString().indexOf("［PR］") == -1
 									&& currentItem.getTitle().toString().indexOf("PR:") == -1) {
 								list.add(currentItem);
+								if (list.size() > 10) {
+									break DOC;
+								}
 							}
 						}
 						break;
@@ -155,6 +173,10 @@ public class FetchFeedService extends Service {
 		} catch (Exception e) {
 			Log.e("NewsParserTask", e.getMessage());
 			throw new NewsException("failed to retrieve rss feed.", e);
+		} finally {
+			try {
+				if (is != null) is.close();
+			} catch (Exception e) {}
 		}
 		return list;
 	}
