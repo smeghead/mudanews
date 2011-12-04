@@ -30,6 +30,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -48,6 +50,7 @@ public class FetchFeedService extends Service {
 	static final String TAG = "FetchFeedService";
 	
 	public void onStart(Intent intent, int startId) {
+		Log.d("FetchFeedService", "onStart");
 		// タイマの設定
 		Timer timer = new Timer(true);
 		final Handler handler = new Handler();
@@ -67,9 +70,13 @@ public class FetchFeedService extends Service {
 			if (count > 0) {
 				NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 				Notification notification = new Notification(
-						android.R.drawable.btn_default, 
+						R.drawable.icon, 
 						"ニュースです", 
 						System.currentTimeMillis());
+				notification.defaults |= Notification.DEFAULT_VIBRATE;
+				Uri sound = Uri.parse(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI);
+				notification.sound = sound;
+				
 				Intent intent = new Intent(getApplicationContext(), MudanewsActivity.class);
 				PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
 				notification.setLatestEventInfo(
@@ -78,6 +85,7 @@ public class FetchFeedService extends Service {
 						String.valueOf(count) + "件のニュースが更新されました",
 						contentIntent);
 				manager.notify(R.string.app_name, notification);
+				
 			}
 		}
 	};

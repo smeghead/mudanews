@@ -22,7 +22,11 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
 import com.starbug1.android.mudanews.data.More;
 import com.starbug1.android.mudanews.data.NewsListItem;
 
@@ -30,6 +34,8 @@ public class MudanewsActivity extends Activity {
 	private List<NewsListItem> items_;
 	private NewsListAdapter adapter_;
 	private int page_ = 0;
+	
+	private AdView adView_;
 
 	// private final ServiceReceiver receiver_ = new ServiceReceiver();
 	private FetchFeedService fetchFeedService_;
@@ -71,13 +77,6 @@ public class MudanewsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		WindowManager w = getWindowManager();
-		Display d = w.getDefaultDisplay();
-		int width = d.getWidth();
-		int column_count = width / 160;
-		GridView grid = (GridView) this.findViewById(R.id.grid);
-		grid.setNumColumns(column_count);
-
 		if (items_ != null) {
 			updateList();
 			return;
@@ -115,8 +114,29 @@ public class MudanewsActivity extends Activity {
 	}
 
 	private void updateList() {
+		WindowManager w = getWindowManager();
+		Display d = w.getDefaultDisplay();
+		int width = d.getWidth();
+		int column_count = width / 160;
+		GridView grid = (GridView) this.findViewById(R.id.grid);
+		grid.setNumColumns(column_count);
+
 		NewsParserTask task = new NewsParserTask(this, adapter_);
 		task.execute(String.valueOf(page_));
+		
+		//admob
+	    // Create the adView
+	    adView_ = new AdView(this, AdSize.BANNER, "a14edaf2bb22e23");
+
+	    // Lookup your LinearLayout assuming it’s been given
+	    // the attribute android:id="@+id/mainLayout"
+	    LinearLayout layout = (LinearLayout)findViewById(R.id.admobLayout);
+
+	    // Add the adView to it
+	    layout.addView(adView_);
+
+	    // Initiate a generic request to load it with an ad
+	    adView_.loadAd(new AdRequest());
 	}
 
 	@Override
@@ -154,9 +174,9 @@ public class MudanewsActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
+		adView_.destroy();
 		super.onDestroy();
 		doUnbindService();
-
 	}
 
 	@Override
