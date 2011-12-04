@@ -71,6 +71,7 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 						.findViewById(R.id.item_image);
 				image.setImageDrawable(null);
 				image.setImageBitmap(b);
+				image.setVisibility(ImageView.VISIBLE);
 			} else {
 				Log.d("NewsListAdapter", "item more? id:" + item.getId());
 				ImageView image = (ImageView) view
