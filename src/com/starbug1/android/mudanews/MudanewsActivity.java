@@ -13,6 +13,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,7 +36,7 @@ public class MudanewsActivity extends Activity {
 	private NewsListAdapter adapter_;
 	private int page_ = 0;
 	
-	private AdView adView_;
+//	private AdView adView_;
 
 	// private final ServiceReceiver receiver_ = new ServiceReceiver();
 	private FetchFeedService fetchFeedService_;
@@ -81,14 +82,20 @@ public class MudanewsActivity extends Activity {
 			updateList(true);
 			return;
 		}
+		Log.d("MudanewsActivity", "start service.");
 		new Thread() {
 			@Override
 			public void run() {
+				Log.d("MudanewsActivity", "thread start service.");
 				MudanewsActivity.this.startService(new Intent(MudanewsActivity.this, FetchFeedService.class));
+				Log.d("MudanewsActivity", "thread started service.");
 			}
 		}.start();
+		Log.d("MudanewsActivity", "started service.");
 
+		Log.d("MudanewsActivity", "bind service.");
 		doBindService();
+		Log.d("MudanewsActivity", "bound service.");
 
 		page_ = 0;
 		items_ = new ArrayList<NewsListItem>();
@@ -115,7 +122,9 @@ public class MudanewsActivity extends Activity {
 				}
 			}
 		});
+		Log.d("MudanewsActivity", "updateList start.");
 		updateList(true);
+		Log.d("MudanewsActivity", "updateList end.");
 
 		NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		manager.cancelAll();
@@ -135,19 +144,6 @@ public class MudanewsActivity extends Activity {
 		if (!initAdd) {
 			return;
 		}
-		//admob
-	    // Create the adView
-	    adView_ = new AdView(this, AdSize.BANNER, "a14edaf2bb22e23");
-
-	    // Lookup your LinearLayout assuming it’s been given
-	    // the attribute android:id="@+id/mainLayout"
-	    LinearLayout layout = (LinearLayout)findViewById(R.id.admobLayout);
-
-	    // Add the adView to it
-	    layout.addView(adView_);
-
-	    // Initiate a generic request to load it with an ad
-	    adView_.loadAd(new AdRequest());
 	}
 
 	@Override
@@ -190,7 +186,7 @@ public class MudanewsActivity extends Activity {
 	}
 	@Override
 	protected void onDestroy() {
-		adView_.destroy();
+//		adView_.destroy();
 		super.onDestroy();
 		doUnbindService();
 	}

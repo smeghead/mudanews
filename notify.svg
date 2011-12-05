@@ -15,10 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.2 r9819"
-   sodipodi:docname="mudanews.svg"
-   inkscape:export-filename="/home/smeghead/eclipse/mudanews/res/drawable-hdpi/icon.png"
-   inkscape:export-xdpi="48.209999"
-   inkscape:export-ydpi="48.209999">
+   sodipodi:docname="notify.svg"
+   inkscape:export-filename="/home/smeghead/eclipse/mudanews/res/drawable-mdpi/notify.png"
+   inkscape:export-xdpi="21.09"
+   inkscape:export-ydpi="21.09">
   <defs
      id="defs4">
     <linearGradient
@@ -42,7 +42,7 @@
        fy="64"
        r="56"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="translate(0,924.36218)" />
+       gradientTransform="translate(0,924.36216)" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -53,7 +53,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="5.4453125"
      inkscape:cx="59.711912"
-     inkscape:cy="71.862267"
+     inkscape:cy="65.469121"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -90,16 +90,6 @@
      id="layer1"
      transform="translate(0,-924.36218)">
     <rect
-       style="opacity:1;fill:#0000ff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-       id="rect2987"
-       width="112"
-       height="112"
-       x="8"
-       y="8"
-       transform="translate(0,924.36218)"
-       rx="15"
-       ry="15" />
-    <rect
        ry="15"
        rx="15"
        y="932.36218"
@@ -107,7 +97,7 @@
        height="112"
        width="112"
        id="rect3838"
-       style="opacity:0.68275862;fill:url(#radialGradient3854);fill-opacity:1;fill-rule:nonzero;stroke:none" />
+       style="opacity:1;fill:url(#radialGradient3854);fill-opacity:1;fill-rule:nonzero;stroke:none" />
     <g
        id="g3081"
        transform="translate(0,1)">

@@ -18,6 +18,8 @@ import com.starbug1.android.mudanews.AppException;
 
 public class FileDownloader {
 	public static String download(String uri) throws AppException {
+		InputStream is = null;
+		BufferedOutputStream out = null;
 		try {
 			int responseCode = 0;
 			int BUFFER_SIZE = 10240;
@@ -37,10 +39,10 @@ public class FileDownloader {
 			String content = "";
 			
 			if (responseCode == HttpStatus.SC_OK) {
-				InputStream is = res.getEntity().getContent();
+				is = res.getEntity().getContent();
 				BufferedInputStream in = new BufferedInputStream(is, BUFFER_SIZE);
 				ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-				BufferedOutputStream out = new BufferedOutputStream(
+				out = new BufferedOutputStream(
 						byteStream, BUFFER_SIZE);
 
 				byte buf[] = new byte[BUFFER_SIZE];
@@ -51,8 +53,8 @@ public class FileDownloader {
 				out.flush();
 
 				content = byteStream.toString();
-				out.close();
-				in.close();
+				out.close(); out = null;
+				in.close(); in = null;
 			} else if (responseCode == HttpStatus.SC_NOT_FOUND) {
 				throw new AppException("NOT FOUND");
 			} else if (responseCode == HttpStatus.SC_REQUEST_TIMEOUT) {
@@ -62,6 +64,13 @@ public class FileDownloader {
 		} catch (Exception e) {
 			Log.e("FileDownloader", "failed to download." + e.getMessage());
 			throw new AppException("failed to download.", e);
+		} finally {
+			try {
+				if (is != null) is.close();
+			} catch (Exception e) {}
+			try {
+				if (out != null) out.close();
+			} catch (Exception e) {}
 		}
 	}
 }

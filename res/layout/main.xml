@@ -1,12 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads" 
     android:orientation="vertical"
-    android:layout_height="fill_parent" android:layout_width="fill_parent">
-    <!-- リストビュー -->
-    <LinearLayout android:orientation="vertical" android:gravity="center" android:id="@+id/admobLayout" android:layout_width="fill_parent" android:layout_height="wrap_content"></LinearLayout>
+    android:layout_height="wrap_content" android:layout_width="fill_parent">
+    <LinearLayout  
+	    android:layout_width="fill_parent"  
+	    android:layout_height="wrap_content" android:background="#002dfe">
+        <ImageView android:layout_width="wrap_content" android:src="@drawable/header" android:id="@+id/imageView1" android:layout_height="wrap_content"></ImageView>  
+  
+  
+    </LinearLayout>  
     <LinearLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/linearLayout1" android:orientation="vertical">
-        <GridView android:stretchMode="columnWidth" android:gravity="center" android:layout_height="fill_parent" android:layout_width="fill_parent" android:numColumns="2" android:id="@+id/grid"></GridView>
-        <TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@android:id/empty"></TextView>
+        <GridView
+                android:id="@+id/grid"
+                android:stretchMode="columnWidth" 
+                android:gravity="center" 
+                android:layout_width="fill_parent" 
+                android:numColumns="2" 
+                android:layout_height="0px"
+                android:layout_weight="1"
+                android:drawSelectorOnTop="false"
+                android:layout_alignParentTop="true">
+<!--
+                android:divider="#00000000" 
+                android:background="@android:color/transparent"
+                android:cacheColorHint="#00000000"
+-->
+        </GridView>
+	    <com.google.ads.AdView
+	            android:id="@+id/adView"
+	            android:layout_width="fill_parent" 
+	            android:layout_height="wrap_content"
+	            ads:adUnitId="a14edaf2bb22e23"
+	            ads:adSize="BANNER"
+	            ads:loadAdOnCreate="true">
+	    </com.google.ads.AdView>
     </LinearLayout>
-    <!-- リストが空のときに表示 -->
 </LinearLayout>

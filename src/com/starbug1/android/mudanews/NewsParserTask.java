@@ -97,7 +97,9 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 
 	@Override
 	protected void onPostExecute(List<NewsListItem> result) {
-		progresDialog_.dismiss();
+		if (progresDialog_.isShowing()) {
+			progresDialog_.dismiss();
+		}
 		for (NewsListItem item : result) {
 			adapter_.add(item);
 		}

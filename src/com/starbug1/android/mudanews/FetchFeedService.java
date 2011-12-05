@@ -31,11 +31,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Xml;
+import android.widget.Toast;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
@@ -53,46 +53,40 @@ public class FetchFeedService extends Service {
 		Log.d("FetchFeedService", "onStart");
 		// タイマの設定
 		Timer timer = new Timer(true);
-		final Handler handler = new Handler();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				Log.d("FetchFeedService", "fetch feeds start.....");
-				handler.post(fetchFeeds_);
+				fetchFeeds();
 			}
 		}, 1000, 1000 * 60 * 15);
 		super.onStart(intent, startId);
 	}
 
-	private Runnable fetchFeeds_ = new Runnable() {
-		public void run() {
-			int count = updateFeeds();
-			
-			if (count > 0) {
-				NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-				Notification notification = new Notification(
-						R.drawable.icon, 
-						"ニュースです", 
-						System.currentTimeMillis());
-				notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
-				
-				Intent intent = new Intent(FetchFeedService.this, MudanewsActivity.class);
-				PendingIntent contentIntent = PendingIntent.getActivity(FetchFeedService.this, 0, intent, 0);
-				notification.setLatestEventInfo(
-						getApplicationContext(), 
-						"無駄新聞", 
-						String.valueOf(count) + "件のニュースが更新されました",
-						contentIntent);
-				manager.notify(R.string.app_name, notification);
-				
-			}
+	private void fetchFeeds() {
+		int count = updateFeeds();
+
+		if (count > 0) {
+			NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+			Notification notification = new Notification(R.drawable.notify,
+					"ニュースです", System.currentTimeMillis());
+			notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
+
+			Intent intent = new Intent(FetchFeedService.this,
+					MudanewsActivity.class);
+			PendingIntent contentIntent = PendingIntent.getActivity(
+					FetchFeedService.this, 0, intent, 0);
+			notification.setLatestEventInfo(getApplicationContext(), "無駄新聞",
+					String.valueOf(count) + "件のニュースが更新されました", contentIntent);
+			manager.notify(R.string.app_name, notification);
+
 		}
-	};
+	}
 			
 	public int updateFeeds() {
 		int count = 0;
 		try {
-			// 全てのフィードを取得すると処理が長すぎて応答無しになるので、1度に1つだけを取得する
+			// 全てのフィードを取得すると処理が重たいので、1度に1つだけを取得する
 			int random = (int) Math.round(Math.random() * 2);
 			switch (random) {
 			case 0:
@@ -157,7 +151,6 @@ public class FetchFeedService extends Service {
 					case XmlPullParser.END_TAG:
 						tag = parser.getName();
 						if (tag.equals("item")) {
-							Log.d("NewsParserTask", "title:" + currentItem.getTitle());
 							if (currentItem.getTitle().toString().indexOf("［PR］") == -1
 									&& currentItem.getTitle().toString().indexOf("PR:") == -1) {
 								list.add(currentItem);
@@ -182,7 +175,6 @@ public class FetchFeedService extends Service {
 	}
 	
 	private String pickupUrl(String src) {
-		Log.d("FetchFeedService", "src: " + src);
 		Pattern p = Pattern.compile("<img.*src=\"([^\"]*)\"");
 		Matcher m = p.matcher(src);
 		if (!m.find()) {
@@ -227,7 +219,6 @@ public class FetchFeedService extends Service {
 						continue;
 					}
 					String mainPart = m.group(1);
-					Log.d("FetchFeedService", "mainpart: " + mainPart);
 					p = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
 					m = p.matcher(mainPart);
 					if (!m.find()) {
@@ -240,9 +231,10 @@ public class FetchFeedService extends Service {
 				}
 			}
 			URL url;
+			InputStream is = null;
 			try {
 				url = new URL(imageUrl);
-				InputStream is = url.openConnection().getInputStream();
+				is = url.openConnection().getInputStream();
 				Bitmap image = BitmapFactory.decodeStream(is);
 				
 				int heightOrg = image.getHeight(), widthOrg = image.getWidth();
@@ -273,14 +265,18 @@ public class FetchFeedService extends Service {
 		        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream);
 		        item.setImage(stream.toByteArray());
 			} catch (MalformedURLException e) {
-				Log.e("FetchFeedService", "failed to get image." + e.getMessage());
+				Log.e("FetchFeedService", "[MalformedURLException] failed to get image." + e.getMessage() + " " + imageUrl);
 				continue;
 			} catch (IOException e) {
-				Log.e("FetchFeedService", "failed to get image." + e.getMessage());
+				Log.e("FetchFeedService", "[IOException] failed to get image." + e.getMessage() + " " + imageUrl);
 				continue;
 			} catch (Exception e) {
-				Log.e("FetchFeedService", "failed to get image." + e.getMessage());
+				Log.e("FetchFeedService", "[Exception] failed to get image." + e.getMessage() + " " + imageUrl);
 				continue;
+			} finally {
+				try {
+					if (is != null) is.close();
+				} catch (Exception e) {}
 			}
 		}
 		return list;
@@ -294,36 +290,41 @@ public class FetchFeedService extends Service {
 //		db.execSQL("delete from feeds");
 //		db.execSQL("delete from images");
 		
-		for (NewsListItem item : list) {
-			Cursor c = db.rawQuery("select id from feeds where title = ? and source = ?", new String[]{item.getTitle(), item.getSource()});
-			int count = c.getCount();
-			c.close();
-			if (count > 0) continue; //同じソースで同じタイトルがあったら、取り込まない。
-			
-			ContentValues values = new ContentValues();
-	        values.put("source", item.getSource());
-	        values.put("title", item.getTitle());
-	        values.put("link", item.getLink());
-	        values.put("description", item.getDescription());
-	        values.put("category", item.getCategory());
-	        values.put("published_at", item.getPublishedAt());
-	        values.put("created_at", now.getTime());
-	        long id = db.insert("feeds", null, values);
-	        Log.d("FetchFeedService", "feed_id:" + id);
+		Cursor c = null;
+		try {
+			for (NewsListItem item : list) {
+				c = db.rawQuery("select id from feeds where title = ? and source = ?", new String[]{item.getTitle(), item.getSource()});
+				int count = c.getCount();
+				c.close(); c = null;
+				if (count > 0) continue; //同じソースで同じタイトルがあったら、取り込まない。
+				
+				ContentValues values = new ContentValues();
+		        values.put("source", item.getSource());
+		        values.put("title", item.getTitle());
+		        values.put("link", item.getLink());
+		        values.put("description", item.getDescription());
+		        values.put("category", item.getCategory());
+		        values.put("published_at", item.getPublishedAt());
+		        values.put("created_at", now.getTime());
+		        long id = db.insert("feeds", null, values);
 
-	        registerCount++;
+		        registerCount++;
 
-	        if (item.getImage() == null) {
-	        	continue;
-	        }
-	        values = new ContentValues();
-	        values.put("feed_id", id);
-	        values.put("image", item.getImage());
-	        values.put("created_at", now.getTime());
-	        db.insert("images", null, values);
+		        if (item.getImage() == null) {
+		        	continue;
+		        }
+		        values = new ContentValues();
+		        values.put("feed_id", id);
+		        values.put("image", item.getImage());
+		        values.put("created_at", now.getTime());
+		        db.insert("images", null, values);
+			}
+			db.close();
+			return registerCount;
+		} finally {
+			if (c != null) c.close();
+			if (db.isOpen()) db.close();
 		}
-		db.close();
-		return registerCount;
 	}
 
     public class FetchFeedServiceLocalBinder extends Binder {
@@ -333,12 +334,12 @@ public class FetchFeedService extends Service {
         }
     }
     //Binderの生成
-    private final IBinder mBinder = new FetchFeedServiceLocalBinder();
+    private final IBinder binder_ = new FetchFeedServiceLocalBinder();
  
     @Override
     public IBinder onBind(Intent intent) {
         Log.i(TAG, "onBind" + ": " + intent);
-        return mBinder;
+        return binder_;
     }
  
     @Override
