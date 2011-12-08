@@ -7,5 +7,5 @@
     <ImageView android:src="@android:drawable/ic_menu_gallery" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/item_image" android:maxHeight="160px" android:minHeight="160px" android:maxWidth="160px" android:minWidth="160px"></ImageView>
 	<TextView
 		android:id="@+id/item_title"
-		android:textColor="#99ffffff" android:background="#99000000" android:textSize="12sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxHeight="130px"/>
+		android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom" android:textColor="#eeffffff" android:textSize="10sp" android:maxHeight="58px" android:background="#99000000"/>
 </FrameLayout>

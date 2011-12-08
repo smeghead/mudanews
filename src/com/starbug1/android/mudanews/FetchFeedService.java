@@ -40,6 +40,7 @@ import android.widget.Toast;
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
 import com.starbug1.android.mudanews.utils.FileDownloader;
+import com.starbug1.android.mudanews.utils.InternetStatus;
 
 /**
  * @author smeghead
@@ -84,6 +85,10 @@ public class FetchFeedService extends Service {
 	}
 			
 	public int updateFeeds() {
+		if (!InternetStatus.isConnected(getApplicationContext())) {
+			Log.i("FetchFeedService", "no connection.");
+			return 0;
+		}
 		int count = 0;
 		try {
 			// 全てのフィードを取得すると処理が重たいので、1度に1つだけを取得する
@@ -91,21 +96,21 @@ public class FetchFeedService extends Service {
 			switch (random) {
 			case 0:
 				Log.d("FetchFeedService", "fetch らばQ");
-				count += registerNews(fetchImage(parseXml("らばQ", "http://labaq.com/index.rdf")));
+				count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
 				break;
 			case 1:
 				Log.d("FetchFeedService", "fetch 痛いニュース");
-				count += registerNews(fetchImage(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf")));
+				count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
 				break;
 			case 2:
 				Log.d("FetchFeedService", "fetch GIGAZINE");
-				count += registerNews(fetchImage(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/")));
+				count += registerNews(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/"));
 				break;
 			}
 			Log.d("FetchFeedService", "fetched");
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());
-			throw new NewsException("failed to background task.", e);
+			throw new AppException("failed to background task.", e);
 		}
 		return count;
 	}
@@ -152,7 +157,8 @@ public class FetchFeedService extends Service {
 						tag = parser.getName();
 						if (tag.equals("item")) {
 							if (currentItem.getTitle().toString().indexOf("［PR］") == -1
-									&& currentItem.getTitle().toString().indexOf("PR:") == -1) {
+									&& currentItem.getTitle().toString().indexOf("PR:") == -1
+									&& currentItem.getTitle().toString().indexOf("ヘッドラインニュース") == -1) {
 								list.add(currentItem);
 								if (list.size() > 10) {
 									break DOC;
@@ -165,7 +171,7 @@ public class FetchFeedService extends Service {
 			}
 		} catch (Exception e) {
 			Log.e("NewsParserTask", e.getMessage());
-			throw new NewsException("failed to retrieve rss feed.", e);
+			//処理は継続する
 		} finally {
 			try {
 				if (is != null) is.close();
@@ -206,8 +212,7 @@ public class FetchFeedService extends Service {
 		return 0;
 	}
 
-	private List<NewsListItem> fetchImage(List<NewsListItem> list) {
-		for (NewsListItem item : list) {
+	private NewsListItem fetchImage(NewsListItem item) {
 			String imageUrl = item.getImageUrl();
 			if (imageUrl == null || imageUrl.length() == 0) {
 				try {
@@ -216,18 +221,18 @@ public class FetchFeedService extends Service {
 					Pattern p = Pattern.compile("class=\"preface\"(.*)$", Pattern.DOTALL);
 					Matcher m = p.matcher(content);
 					if (!m.find()) {
-						continue;
+						return item;
 					}
 					String mainPart = m.group(1);
 					p = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
 					m = p.matcher(mainPart);
 					if (!m.find()) {
-						continue;
+						return item;
 					}
 					imageUrl = m.group(1);
 				} catch (AppException e) {
 					Log.e("FetchFeedService", "failed to download content.");
-					continue;
+					return item;
 				}
 			}
 			URL url;
@@ -266,20 +271,16 @@ public class FetchFeedService extends Service {
 		        item.setImage(stream.toByteArray());
 			} catch (MalformedURLException e) {
 				Log.e("FetchFeedService", "[MalformedURLException] failed to get image." + e.getMessage() + " " + imageUrl);
-				continue;
 			} catch (IOException e) {
 				Log.e("FetchFeedService", "[IOException] failed to get image." + e.getMessage() + " " + imageUrl);
-				continue;
 			} catch (Exception e) {
 				Log.e("FetchFeedService", "[Exception] failed to get image." + e.getMessage() + " " + imageUrl);
-				continue;
 			} finally {
 				try {
 					if (is != null) is.close();
 				} catch (Exception e) {}
 			}
-		}
-		return list;
+			return item;
 	}
 	
 	private int registerNews(List<NewsListItem> list) {
@@ -298,6 +299,8 @@ public class FetchFeedService extends Service {
 				c.close(); c = null;
 				if (count > 0) continue; //同じソースで同じタイトルがあったら、取り込まない。
 				
+				item = fetchImage(item);
+
 				ContentValues values = new ContentValues();
 		        values.put("source", item.getSource());
 		        values.put("title", item.getTitle());

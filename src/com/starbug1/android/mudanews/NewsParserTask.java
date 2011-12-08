@@ -11,10 +11,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.GridView;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
-import com.starbug1.android.mudanews.data.More;
 import com.starbug1.android.mudanews.data.NewsListItem;
 
 /**
@@ -22,6 +22,7 @@ import com.starbug1.android.mudanews.data.NewsListItem;
  *
  */
 public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem>> {
+	private final int MAX_ENTRIES_PER_PAGE = 30;
 	private final MudanewsActivity activity_;
 	private final NewsListAdapter adapter_;
 	private ProgressDialog progresDialog_;
@@ -57,7 +58,10 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 					"from feeds " + 
 					"order by published_at desc " + 
 					"limit ? " +
-					"offset ?", new String[]{String.valueOf(30), String.valueOf(page_ * 30)});
+					"offset ?", new String[]{
+							String.valueOf(MAX_ENTRIES_PER_PAGE + 1), 
+							String.valueOf(page_ * MAX_ENTRIES_PER_PAGE)}
+			);
 			c.moveToFirst();
 			for (int i = 0, len = c.getCount(); i < len; i++) {
 				NewsListItem item = new NewsListItem();
@@ -83,12 +87,10 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 					if (cu != null) cu.close();
 				}
 			}
-			//more
-			result.add(new More());
 			return result;
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.getMessage());
-			throw new NewsException("failed to background task.", e);
+			throw new AppException("failed to background task.", e);
 		} finally {
 			if (c != null) c.close();
 			if (db != null) db.close();
@@ -97,16 +99,30 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 
 	@Override
 	protected void onPostExecute(List<NewsListItem> result) {
-		if (progresDialog_.isShowing()) {
-			progresDialog_.dismiss();
-		}
+		progresCancel();
+		
+		boolean hasNextPages = result.size() > MAX_ENTRIES_PER_PAGE;
+		int addedCount = 0;
 		for (NewsListItem item : result) {
+			if (addedCount >= MAX_ENTRIES_PER_PAGE) {
+				break;
+			}
 			adapter_.add(item);
+			addedCount++;
 		}
 		if (page_ == 0) {
 			GridView view = (GridView) activity_.findViewById(R.id.grid);
 			view.setAdapter(adapter_);
-//			activity_.setListAdapter(adapter_);
+		}
+		Button more = (Button) activity_.findViewById(R.id.more);
+		more.setTag(Boolean.valueOf(hasNextPages));
+		more.setVisibility(Button.GONE);
+	}
+	
+	public void progresCancel() {
+		if (progresDialog_ != null && progresDialog_.isShowing()) {
+			progresDialog_.dismiss();
+			progresDialog_ = null;
 		}
 	}
 }

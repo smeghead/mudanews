@@ -1,6 +1,6 @@
 package com.starbug1.android.mudanews;
 
-public class AppException extends Exception {
+public class AppException extends RuntimeException {
 
 	/**
 	 * 

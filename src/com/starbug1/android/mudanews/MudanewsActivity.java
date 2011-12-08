@@ -2,6 +2,8 @@ package com.starbug1.android.mudanews;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -10,39 +12,60 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AbsListView;
+import android.widget.Button;
 import android.widget.GridView;
-import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.ViewFlipper;
 
-import com.google.ads.AdRequest;
-import com.google.ads.AdSize;
-import com.google.ads.AdView;
-import com.starbug1.android.mudanews.data.More;
 import com.starbug1.android.mudanews.data.NewsListItem;
+import com.starbug1.android.mudanews.utils.UrlUtils;
 
 public class MudanewsActivity extends Activity {
 	private List<NewsListItem> items_;
 	private NewsListAdapter adapter_;
 	private int page_ = 0;
-	
+	private ViewFlipper flipper_;
+	private Animation anim_left_in_, anim_left_out_, anim_right_in_, anim_right_out_;
+	private ProgressDialog progressDialog_;
+
+	private void setupAnim() {
+		anim_left_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this, R.animator.left_in);
+		anim_left_out_ = AnimationUtils.loadAnimation(MudanewsActivity.this, R.animator.left_out);
+		anim_right_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this, R.animator.right_in);
+		anim_right_out_ = AnimationUtils.loadAnimation(MudanewsActivity.this, R.animator.right_out);
+	}
 //	private AdView adView_;
 
 	// private final ServiceReceiver receiver_ = new ServiceReceiver();
 	private FetchFeedService fetchFeedService_;
 	private boolean isBound_;
 	final Handler handler_ = new Handler();
-	private ProgressDialog progresDialog_;
+	private boolean isViewingEntry_ = false;
 
 	private ServiceConnection connection_ = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
@@ -78,10 +101,9 @@ public class MudanewsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		if (items_ != null) {
-			updateList(true);
-			return;
-		}
+		setupAnim();
+		flipper_ = (ViewFlipper) this.findViewById(R.id.flipper);
+		
 		Log.d("MudanewsActivity", "start service.");
 		new Thread() {
 			@Override
@@ -100,50 +122,136 @@ public class MudanewsActivity extends Activity {
 		page_ = 0;
 		items_ = new ArrayList<NewsListItem>();
 		adapter_ = new NewsListAdapter(this, items_);
+		
+		TextView version = (TextView) this.findViewById(R.id.version);
+		version.setText(getVersionName());
+		
 		GridView view = (GridView) this.findViewById(R.id.grid);
 		view.setOnItemClickListener(new OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> adapter, View view,
 					int position, long id) {
 				NewsListItem item = items_.get(position);
-				if (item instanceof More) {
-					// read more
-					items_.remove(position);
-					if (items_.size() > 0) {
-						page_++;
+				
+				flipper_.setInAnimation(anim_right_in_);
+				flipper_.setOutAnimation(anim_left_out_);
+				flipper_.showNext();
+				isViewingEntry_ = true;
+				
+				WebView entryView = (WebView) MudanewsActivity.this.findViewById(R.id.entryView);
+				entryView.setWebViewClient(new WebViewClient(){
+
+					@Override
+					public void onPageFinished(WebView view, String url) {
+						if (progressDialog_ != null) {
+							progressDialog_.dismiss();
+						}
+						Log.d("NewsDetailActivity", "onPageFinished url: " + url);
 					}
 
-					updateList(false);
-				} else {
-					Intent intent = new Intent(MudanewsActivity.this,
-							NewsDetailActivity.class);
-					intent.putExtra("link", item.getLink());
-					startActivity(intent);
+					@Override
+					public void onPageStarted(WebView view, String url, Bitmap favicon) {
+						final WebView v = view;
+						Log.d("NewsDetailActivity", "onPageStarted url: " + url);
+						Timer timer = new Timer();
+						timer.schedule(new TimerTask() {
+							@Override
+							public void run() {
+								if (v.getContentHeight() > 0) {
+									handler_.post(new Runnable() {
+										public void run() {
+											if (progressDialog_ != null) {
+												progressDialog_.dismiss();
+											}
+										}
+									});
+								}
+							}
+						}, 1000 * 2, 1000);
+					}
+					
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view, String url) {
+						Log.d("NewsDetailActivity", "shouldOverrideUrlLoading url: " + url);
+						return super.shouldOverrideUrlLoading(view, url);
+					}
+
+					@Override
+					public void onLoadResource(WebView view, String url) {
+						Log.d("NewsDetailActivity", "onLoadResource url: " + url);
+						super.onLoadResource(view, url);
+					}
+					
+				});
+				entryView.getSettings().setJavaScriptEnabled(true);
+				entryView.clearView();
+				entryView.loadUrl(UrlUtils.mobileUrl(item.getLink()));
+				progressDialog_ = new ProgressDialog(MudanewsActivity.this);
+				progressDialog_.setMessage("読み込み中...");
+				progressDialog_.show();
+			}
+		});
+		final Button more = (Button)this.findViewById(R.id.more);
+		more.setVisibility(Button.GONE);
+		more.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				page_++;
+				updateList(page_);
+			}
+		});
+		
+		view.setOnScrollListener(new OnScrollListener() {
+			private boolean stayBottom = false;
+			
+			public void onScrollStateChanged(AbsListView view, int scrollState) {
+				if (!Boolean.parseBoolean(more.getTag().toString())) {
+					return;
 				}
+				switch (scrollState) {
+				// スクロールしていない
+				case OnScrollListener.SCROLL_STATE_IDLE:
+				case OnScrollListener.SCROLL_STATE_FLING:
+					Log.d("MudanewsActivity", "onScrollStateChanged" + OnScrollListener.SCROLL_STATE_FLING);
+					if (stayBottom) {
+						more.setVisibility(Button.VISIBLE);
+						Log.d("MudanewsActivity", "onScrollStateChanged visible");
+					} else {
+						more.setVisibility(Button.GONE);
+						Log.d("MudanewsActivity", "onScrollStateChanged gone");
+					}
+					break;
+				}
+			}
+			
+			public void onScroll(AbsListView view, int firstVisibleItem,
+					int visibleItemCount, int totalItemCount) {
+				Log.d("MudanewsActivity", "onScrollState");
+				stayBottom = (totalItemCount == firstVisibleItem + visibleItemCount);
 			}
 		});
 		Log.d("MudanewsActivity", "updateList start.");
-		updateList(true);
+		updateList(page_);
 		Log.d("MudanewsActivity", "updateList end.");
 
 		NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		manager.cancelAll();
 	}
 
-	private void updateList(boolean initAdd) {
+	private NewsParserTask task_ = null;
+	
+	private void setupGridColumns() {
 		WindowManager w = getWindowManager();
 		Display d = w.getDefaultDisplay();
 		int width = d.getWidth();
 		int column_count = width / 160;
 		GridView grid = (GridView) this.findViewById(R.id.grid);
 		grid.setNumColumns(column_count);
-
-		NewsParserTask task = new NewsParserTask(this, adapter_);
-		task.execute(String.valueOf(page_));
+	}
+	private void updateList(int page) {
+		setupGridColumns();
 		
-		if (!initAdd) {
-			return;
-		}
+		task_ = new NewsParserTask(this, adapter_);
+		task_.execute(String.valueOf(page));
 	}
 
 	@Override
@@ -166,27 +274,27 @@ public class MudanewsActivity extends Activity {
 
 	private void fetchFeeds() {
 		items_.clear();
-		progresDialog_ = new ProgressDialog(MudanewsActivity.this);
-		progresDialog_.setMessage("読み込み中...");
-		progresDialog_.show();
+		progressDialog_ = new ProgressDialog(MudanewsActivity.this);
+		progressDialog_.setMessage("読み込み中...");
+		progressDialog_.show();
 		new Thread() {
 			@Override
 			public void run() {
 				fetchFeedService_.updateFeeds();
 				handler_.post(new Runnable() {
 					public void run() {
-						progresDialog_.dismiss();
+						progressDialog_.dismiss();
 						page_ = 0;
 						items_.clear();
-						updateList(false);
+						updateList(page_);
 					}
 				});
 			}
 		}.start();
 	}
+	
 	@Override
 	protected void onDestroy() {
-//		adView_.destroy();
 		super.onDestroy();
 		doUnbindService();
 	}
@@ -195,4 +303,44 @@ public class MudanewsActivity extends Activity {
 	protected void onSaveInstanceState(Bundle outState) {
 	}
 
+	@Override
+	protected void onPause() {
+		if (task_ != null) {
+			task_.progresCancel();
+		}
+		super.onPause();
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		setupGridColumns();
+	}
+
+	private String getVersionName() {
+		PackageInfo packageInfo = null;
+		try {
+		        packageInfo = getPackageManager().getPackageInfo(this.getClass().getPackage().getName(), PackageManager.GET_META_DATA);
+		        return "Version " + packageInfo.versionName;
+		} catch (NameNotFoundException e) {
+			Log.e("NudaNewsActivity", "failed to retreive version info.");
+		}
+		return "";
+	}
+	
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent e) {
+	    if(e.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+	        if(e.getAction() == KeyEvent.ACTION_DOWN) {
+	        	if (isViewingEntry_) {
+					flipper_.setInAnimation(anim_left_in_);
+					flipper_.setOutAnimation(anim_right_out_);
+					isViewingEntry_ = false;
+	        		flipper_.showPrevious();
+		            return false;
+	        	}
+	        }
+	    }
+	    return super.dispatchKeyEvent(e);
+	}
 }

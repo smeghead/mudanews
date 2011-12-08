@@ -24,7 +24,6 @@ public class NewsDetailActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		
 		if (savedInstanceState != null) {
@@ -39,7 +38,7 @@ public class NewsDetailActivity extends Activity {
 		Intent intent = getIntent();
 		String url = intent.getStringExtra("link");
 		Log.d("NewsDetailActivity", "url: " + url);
-		view_ = (WebView) findViewById(R.id.webView1);
+		view_ = (WebView) findViewById(R.id.entryView);
 		view_.setWebViewClient(new WebViewClient(){
 
 			@Override
