@@ -19,11 +19,13 @@ import java.util.regex.Pattern;
 
 import org.xmlpull.v1.XmlPullParser;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -32,6 +34,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Xml;
@@ -49,18 +52,36 @@ import com.starbug1.android.mudanews.utils.InternetStatus;
 public class FetchFeedService extends Service {
 	public static final String ACTION = "mudanews fetch feed Service";
 	static final String TAG = "FetchFeedService";
-	
+	private boolean isRunning = false;
+
+	@Override
+	public void onCreate() {
+		Log.d("FetchFeedService", "onCreate");
+		AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+		Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+		PendingIntent sender = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
+		alarmManager.setInexactRepeating(
+				AlarmManager.RTC_WAKEUP,
+				SystemClock.elapsedRealtime() + 20 * 1000,
+				AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+				sender); 
+		super.onCreate();
+	}
+
 	public void onStart(Intent intent, int startId) {
 		Log.d("FetchFeedService", "onStart");
-		// タイマの設定
-		Timer timer = new Timer(true);
-		timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
+
+		if (!isRunning) {
+			try {
+				isRunning = true;
+				
 				Log.d("FetchFeedService", "fetch feeds start.....");
 				fetchFeeds();
+			} finally {
+				isRunning = false;
 			}
-		}, 1000, 1000 * 60 * 15);
+		}
+
 		super.onStart(intent, startId);
 	}
 

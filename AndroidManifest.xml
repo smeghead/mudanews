@@ -16,9 +16,10 @@
         <activity android:name=".ItemDetailActivity">
         </activity>
         
-        <receiver android:permission="android.permission.RECEIVE_BOOT_COMPLETED" android:name="com.starbug1.android.mudanews.ServiceReceiver">
+        <receiver android:name=".AlarmReceiver">
              <intent-filter>
                  <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                 <action android:name="com.android.vending.INSTALL_REFERRER" />
                  <category android:name="android.intent.category.DEFAULT" />
              </intent-filter>
         </receiver>
