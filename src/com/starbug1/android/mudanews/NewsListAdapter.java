@@ -51,10 +51,17 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 		}
 		NewsListItem item = this.getItem(position);
 		if (item != null) {
+			view.setTag(item);
+			
 			String title = item.getTitle().toString();
 			title_ = (TextView) view.findViewById(R.id.item_title);
 			title_.setText(title);
-			view.setTag(item);
+			ImageView newEntry = (ImageView) view.findViewById(R.id.newEntry);
+			if (item.getViewCount() > 0) {
+				newEntry.setVisibility(ImageView.GONE);
+			} else {
+				newEntry.setVisibility(ImageView.VISIBLE);
+			}
 
 			if (item.getImage() != null) {
 				Bitmap b;

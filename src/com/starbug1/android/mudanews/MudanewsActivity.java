@@ -16,7 +16,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -42,6 +44,7 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
+import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
 import com.starbug1.android.mudanews.utils.UrlUtils;
 
@@ -59,7 +62,6 @@ public class MudanewsActivity extends Activity {
 		anim_right_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this, R.animator.right_in);
 		anim_right_out_ = AnimationUtils.loadAnimation(MudanewsActivity.this, R.animator.right_out);
 	}
-//	private AdView adView_;
 
 	// private final ServiceReceiver receiver_ = new ServiceReceiver();
 	private FetchFeedService fetchFeedService_;
@@ -76,9 +78,6 @@ public class MudanewsActivity extends Activity {
 
 		public void onServiceDisconnected(ComponentName className) {
 			fetchFeedService_ = null;
-			// Toast.makeText(MudanewsActivity.this,
-			// "Activity:onServiceDisconnected",
-			// Toast.LENGTH_SHORT).show();
 		}
 	};
 
@@ -104,27 +103,24 @@ public class MudanewsActivity extends Activity {
 		setupAnim();
 		flipper_ = (ViewFlipper) this.findViewById(R.id.flipper);
 		
-		Log.d("MudanewsActivity", "start service.");
 		new Thread() {
 			@Override
 			public void run() {
-				Log.d("MudanewsActivity", "thread start service.");
 				MudanewsActivity.this.startService(new Intent(MudanewsActivity.this, FetchFeedService.class));
-				Log.d("MudanewsActivity", "thread started service.");
 			}
 		}.start();
-		Log.d("MudanewsActivity", "started service.");
 
-		Log.d("MudanewsActivity", "bind service.");
 		doBindService();
-		Log.d("MudanewsActivity", "bound service.");
 
 		page_ = 0;
 		items_ = new ArrayList<NewsListItem>();
 		adapter_ = new NewsListAdapter(this, items_);
 		
+		String versionName = getVersionName();
 		TextView version = (TextView) this.findViewById(R.id.version);
-		version.setText(getVersionName());
+		version.setText(versionName);
+		TextView version2 = (TextView) this.findViewById(R.id.version2);
+		version2.setText(versionName);
 		
 		GridView view = (GridView) this.findViewById(R.id.grid);
 		view.setOnItemClickListener(new OnItemClickListener() {
@@ -133,6 +129,12 @@ public class MudanewsActivity extends Activity {
 					int position, long id) {
 				NewsListItem item = items_.get(position);
 				
+				DatabaseHelper helper = new DatabaseHelper(MudanewsActivity.this);
+				final SQLiteDatabase db = helper.getWritableDatabase();
+				db.execSQL(
+						"insert into view_logs (feed_id, created_at) values (?, current_timestamp)",
+						new String[]{String.valueOf(item.getId())});
+
 				flipper_.setInAnimation(anim_right_in_);
 				flipper_.setOutAnimation(anim_left_out_);
 				flipper_.showNext();
@@ -153,10 +155,11 @@ public class MudanewsActivity extends Activity {
 					public void onPageStarted(WebView view, String url, Bitmap favicon) {
 						final WebView v = view;
 						Log.d("NewsDetailActivity", "onPageStarted url: " + url);
-						Timer timer = new Timer();
+						final Timer timer = new Timer();
 						timer.schedule(new TimerTask() {
 							@Override
 							public void run() {
+								Log.i("MudanewsActivity", "timer taks");
 								if (v.getContentHeight() > 0) {
 									handler_.post(new Runnable() {
 										public void run() {
@@ -165,6 +168,7 @@ public class MudanewsActivity extends Activity {
 											}
 										}
 									});
+									timer.cancel();
 								}
 							}
 						}, 1000 * 2, 1000);
@@ -172,6 +176,11 @@ public class MudanewsActivity extends Activity {
 					
 					@Override
 					public boolean shouldOverrideUrlLoading(WebView view, String url) {
+						if (!UrlUtils.isSameDomain(view.getOriginalUrl(), url)) {
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+					        startActivity(intent);
+					        return true;
+						}
 						Log.d("NewsDetailActivity", "shouldOverrideUrlLoading url: " + url);
 						return super.shouldOverrideUrlLoading(view, url);
 					}
@@ -184,7 +193,6 @@ public class MudanewsActivity extends Activity {
 					
 				});
 				entryView.getSettings().setJavaScriptEnabled(true);
-				entryView.clearView();
 				entryView.loadUrl(UrlUtils.mobileUrl(item.getLink()));
 				progressDialog_ = new ProgressDialog(MudanewsActivity.this);
 				progressDialog_.setMessage("読み込み中...");
@@ -211,13 +219,10 @@ public class MudanewsActivity extends Activity {
 				// スクロールしていない
 				case OnScrollListener.SCROLL_STATE_IDLE:
 				case OnScrollListener.SCROLL_STATE_FLING:
-					Log.d("MudanewsActivity", "onScrollStateChanged" + OnScrollListener.SCROLL_STATE_FLING);
 					if (stayBottom) {
 						more.setVisibility(Button.VISIBLE);
-						Log.d("MudanewsActivity", "onScrollStateChanged visible");
 					} else {
 						more.setVisibility(Button.GONE);
-						Log.d("MudanewsActivity", "onScrollStateChanged gone");
 					}
 					break;
 				}
@@ -337,6 +342,8 @@ public class MudanewsActivity extends Activity {
 					flipper_.setOutAnimation(anim_right_out_);
 					isViewingEntry_ = false;
 	        		flipper_.showPrevious();
+					WebView entryView = (WebView) MudanewsActivity.this.findViewById(R.id.entryView);
+					entryView.clearView();
 		            return false;
 	        	}
 	        }

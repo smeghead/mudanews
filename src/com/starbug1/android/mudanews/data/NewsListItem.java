@@ -15,6 +15,7 @@ public class NewsListItem {
 	private String source_;
 	private String imageUrl_;
 	private byte[] image_;
+	private int viewCount_;
 	
 	public NewsListItem() {
 		title_ = "";
@@ -98,6 +99,14 @@ public class NewsListItem {
 
 	public void setId(int id) {
 		id_ = id;
+	}
+
+	public int getViewCount() {
+		return viewCount_;
+	}
+
+	public void setViewCount(int viewCount) {
+		viewCount_ = viewCount;
 	}
 
 	
