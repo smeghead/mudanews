@@ -1,5 +1,7 @@
 package com.starbug1.android.mudanews.data;
 
+import android.graphics.Bitmap;
+
 /**
  * 記事一覧に表示するリストビュー
  * 
@@ -15,6 +17,7 @@ public class NewsListItem {
 	private String source_;
 	private String imageUrl_;
 	private byte[] image_;
+	private Bitmap imageBitmap_;
 	private int viewCount_;
 	
 	public NewsListItem() {
@@ -107,6 +110,14 @@ public class NewsListItem {
 
 	public void setViewCount(int viewCount) {
 		viewCount_ = viewCount;
+	}
+
+	public Bitmap getImageBitmap() {
+		return imageBitmap_;
+	}
+
+	public void setImageBitmap(Bitmap imageBitmap) {
+		imageBitmap_ = imageBitmap;
 	}
 
 	

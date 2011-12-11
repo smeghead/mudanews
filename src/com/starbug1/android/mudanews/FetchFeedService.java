@@ -12,8 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +36,6 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Xml;
-import android.widget.Toast;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
@@ -315,10 +312,10 @@ public class FetchFeedService extends Service {
 		Cursor c = null;
 		try {
 			for (NewsListItem item : list) {
-				c = db.rawQuery("select id from feeds where title = ? and source = ?", new String[]{item.getTitle(), item.getSource()});
+				c = db.rawQuery("select id from feeds where link = ?", new String[]{item.getLink()});
 				int count = c.getCount();
 				c.close(); c = null;
-				if (count > 0) continue; //同じソースで同じタイトルがあったら、取り込まない。
+				if (count > 0) continue; //同じ リンクURLのエントリがあったら、取り込まない。
 				
 				item = fetchImage(item);
 
