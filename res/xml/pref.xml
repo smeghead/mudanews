@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="巡回">
+        <ListPreference android:title="巡回間隔" android:entries="@array/arrays_pref_intervals" android:entryValues="@array/arrays_pref_interval_values" android:key="clowl_intervals"></ListPreference>
+        <CheckBoxPreference android:key="pref_notify_sound" android:summaryOn="鳴らす" android:summaryOff="鳴らさない" android:title="新着記事通知時に音を"></CheckBoxPreference>
+        
+    </PreferenceCategory>
+    
+</PreferenceScreen>

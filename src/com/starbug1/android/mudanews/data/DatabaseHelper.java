@@ -1,8 +1,10 @@
 package com.starbug1.android.mudanews.data;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -51,6 +53,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int currentVersion, int newVersion) {
 		//debug
+	}
+
+	public boolean entryIsEmpty() {
+		SQLiteDatabase db = null;
+		Cursor cu = null;
+		try {
+			db = getReadableDatabase();
+			cu = db.rawQuery("select count(*) from feeds", new String[]{});
+			cu.moveToFirst();
+			if (cu.getInt(0) == 0) {
+				Log.w("NewsParserTask", "no feed.");
+				return true;
+			}
+			return false;
+		} finally {
+			if (cu != null) cu.close();
+			if (db != null) db.close();
+		}
 	}
 
 }

@@ -11,6 +11,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,7 @@ import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -32,7 +34,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Xml;
@@ -50,18 +52,25 @@ public class FetchFeedService extends Service {
 	public static final String ACTION = "mudanews fetch feed Service";
 	static final String TAG = "FetchFeedService";
 	private boolean isRunning = false;
+	SharedPreferences sharedPreferences_ = null;
 
 	@Override
 	public void onCreate() {
 		Log.d("FetchFeedService", "onCreate");
-		AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-		Intent alarmIntent = new Intent(this, AlarmReceiver.class);
-		PendingIntent sender = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
-		alarmManager.setInexactRepeating(
-				AlarmManager.RTC_WAKEUP,
-				SystemClock.elapsedRealtime() + 20 * 1000,
-				AlarmManager.INTERVAL_FIFTEEN_MINUTES,
-				sender); 
+		
+		sharedPreferences_ = PreferenceManager.getDefaultSharedPreferences(this);
+		int clowlIntervals = Integer.parseInt(sharedPreferences_.getString("clowl_intervals", "15"));
+		if (clowlIntervals != 0) {
+			AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+			Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+			PendingIntent sender = PendingIntent.getBroadcast(this, 0, alarmIntent, 0);
+			GregorianCalendar calendar = new GregorianCalendar();
+			alarmManager.setInexactRepeating(
+					AlarmManager.RTC_WAKEUP,
+					calendar.getTimeInMillis() + 1 * 1000,
+					1000 * 60 * clowlIntervals,
+					sender); 
+		}
 		super.onCreate();
 	}
 
@@ -88,15 +97,17 @@ public class FetchFeedService extends Service {
 		if (count > 0) {
 			NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			Notification notification = new Notification(R.drawable.notify,
-					"ニュースです", System.currentTimeMillis());
-			notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
+					"ニュースが入りました", System.currentTimeMillis());
+			if (sharedPreferences_.getBoolean("pref_notify_sound", true)) {
+				notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
+			}
 
 			Intent intent = new Intent(FetchFeedService.this,
 					MudanewsActivity.class);
 			PendingIntent contentIntent = PendingIntent.getActivity(
 					FetchFeedService.this, 0, intent, 0);
 			notification.setLatestEventInfo(getApplicationContext(), "無駄新聞",
-					String.valueOf(count) + "件のニュースが更新されました", contentIntent);
+					String.valueOf(count) + "件の新着記事を追加しました", contentIntent);
 			manager.notify(R.string.app_name, notification);
 
 		}
@@ -109,22 +120,25 @@ public class FetchFeedService extends Service {
 		}
 		int count = 0;
 		try {
-			// 全てのフィードを取得すると処理が重たいので、1度に1つだけを取得する
-			int random = (int) Math.round(Math.random() * 2);
-			switch (random) {
-			case 0:
-				Log.d("FetchFeedService", "fetch らばQ");
-				count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
-				break;
-			case 1:
-				Log.d("FetchFeedService", "fetch 痛いニュース");
-				count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
-				break;
-			case 2:
-				Log.d("FetchFeedService", "fetch GIGAZINE");
-				count += registerNews(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/"));
-				break;
-			}
+			count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
+			count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
+			count += registerNews(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/"));
+//			// 全てのフィードを取得すると処理が重たいので、1度に1つだけを取得する
+//			int random = (int) Math.round(Math.random() * 2);
+//			switch (random) {
+//			case 0:
+//				Log.d("FetchFeedService", "fetch らばQ");
+//				count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
+//				break;
+//			case 1:
+//				Log.d("FetchFeedService", "fetch 痛いニュース");
+//				count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
+//				break;
+//			case 2:
+//				Log.d("FetchFeedService", "fetch GIGAZINE");
+//				count += registerNews(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/"));
+//				break;
+//			}
 			Log.d("FetchFeedService", "fetched");
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());

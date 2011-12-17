@@ -57,6 +57,7 @@ public class MudanewsActivity extends Activity {
 	private Animation anim_left_in_, anim_left_out_, anim_right_in_,
 			anim_right_out_;
 	private ProgressDialog progressDialog_;
+	DatabaseHelper dbHelper_ = null;
 
 	private void setupAnim() {
 		anim_left_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this,
@@ -105,16 +106,9 @@ public class MudanewsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
+		dbHelper_ = new DatabaseHelper(MudanewsActivity.this);
 		setupAnim();
 		flipper_ = (ViewFlipper) this.findViewById(R.id.flipper);
-
-		new Thread() {
-			@Override
-			public void run() {
-				MudanewsActivity.this.startService(new Intent(
-						MudanewsActivity.this, FetchFeedService.class));
-			}
-		}.start();
 
 		doBindService();
 
@@ -135,9 +129,7 @@ public class MudanewsActivity extends Activity {
 					int position, long id) {
 				NewsListItem item = items_.get(position);
 
-				DatabaseHelper helper = new DatabaseHelper(
-						MudanewsActivity.this);
-				final SQLiteDatabase db = helper.getWritableDatabase();
+				final SQLiteDatabase db = dbHelper_.getWritableDatabase();
 				db.execSQL(
 						"insert into view_logs (feed_id, created_at) values (?, current_timestamp)",
 						new String[] { String.valueOf(item.getId()) });
@@ -177,7 +169,7 @@ public class MudanewsActivity extends Activity {
 									timer.cancel();
 								}
 							}
-						}, 1000 * 2, 1000);
+						}, 1000, 1000);
 					}
 
 					@Override
@@ -201,6 +193,7 @@ public class MudanewsActivity extends Activity {
 				progressDialog_.show();
 			}
 		});
+		
 		final Button more = (Button) this.findViewById(R.id.more);
 		more.setVisibility(Button.GONE);
 		more.setOnClickListener(new OnClickListener() {
@@ -238,7 +231,18 @@ public class MudanewsActivity extends Activity {
 			}
 		});
 
-		// TODO 初回起動なら、feed取得する
+		// TODO 初回起動なら、feed取得 ボタンを表示する
+		if (dbHelper_.entryIsEmpty()) {
+			final Button fetchfeeds = (Button) this.findViewById(R.id.fetchfeeds);
+			fetchfeeds.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					fetchFeeds();
+					updateList(page_);
+					fetchfeeds.setVisibility(Button.GONE);
+				}
+			});
+			fetchfeeds.setVisibility(Button.VISIBLE);
+		}
 
 		Log.d("MudanewsActivity", "updateList start.");
 		updateList(page_);
@@ -280,8 +284,17 @@ public class MudanewsActivity extends Activity {
 		switch (item.getItemId()) {
 		case R.id.update_feeds:
 			fetchFeeds();
+			break;
+		case R.id.settings:
+			settings();
+			break;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	private void settings() {
+		Intent intent = new Intent(this, AppPrefActivity.class);
+		startActivity(intent);
 	}
 
 	private void fetchFeeds() {
@@ -354,6 +367,7 @@ public class MudanewsActivity extends Activity {
 					WebView entryView = (WebView) MudanewsActivity.this
 							.findViewById(R.id.entryView);
 					entryView.clearView();
+					entryView.loadData("", "text/plain", "UTF-8");
 					return false;
 				}
 			}

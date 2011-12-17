@@ -2,5 +2,6 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/update_feeds" android:title="@string/menu_updated_feeds" android:icon="@android:drawable/ic_menu_rotate"></item>
+    <item android:id="@+id/settings" android:title="設定" android:icon="@android:drawable/ic_menu_preferences"></item>
     
 </menu>
