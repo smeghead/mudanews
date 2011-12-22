@@ -58,6 +58,7 @@ public class MudanewsActivity extends Activity {
 			anim_right_out_;
 	private ProgressDialog progressDialog_;
 	private DatabaseHelper dbHelper_ = null;
+	private NewsListItem currentItem_ = null;
 
 
 	private void setupAnim() {
@@ -129,6 +130,7 @@ public class MudanewsActivity extends Activity {
 			public void onItemClick(AdapterView<?> adapter, View view,
 					int position, long id) {
 				NewsListItem item = items_.get(position);
+				currentItem_ = item;
 
 				final SQLiteDatabase db = dbHelper_.getWritableDatabase();
 				db.execSQL(
@@ -324,23 +326,48 @@ public class MudanewsActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-
+		
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.mainmenu, menu);
 		return true;
 	}
 
 	@Override
+	public boolean onMenuOpened(int featureId, Menu menu) {
+		if (isViewingEntry_) {
+			menu.findItem(R.id.menu_update_feeds).setVisible(false);
+			menu.findItem(R.id.menu_share).setVisible(true);
+		} else {
+			menu.findItem(R.id.menu_share).setVisible(false);
+			menu.findItem(R.id.menu_update_feeds).setVisible(true);
+		}
+		return super.onMenuOpened(featureId, menu);
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.update_feeds:
+		case R.id.menu_update_feeds:
 			fetchFeeds();
 			break;
-		case R.id.settings:
+		case R.id.menu_settings:
 			settings();
+			break;
+		case R.id.menu_share:
+			share();
 			break;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void share() {
+		if (currentItem_ == null) {
+			return;
+		}
+		Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+	    intent.setType("text/plain");
+	    intent.putExtra(Intent.EXTRA_TEXT, currentItem_.getTitle() + " " + currentItem_.getLink() + " #無駄新聞");
+	    startActivity(Intent.createChooser(intent, "共有"));
 	}
 	
 	private void settings() {
