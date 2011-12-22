@@ -28,7 +28,6 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 
 	public NewsListAdapter(Context context, List<NewsListItem> objects) {
 		super(context, 0, objects);
-
 		inflater_ = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
@@ -80,7 +79,6 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 				image.setVisibility(ImageView.GONE);
 			}
 		}
-
 		return view;
 	}
 

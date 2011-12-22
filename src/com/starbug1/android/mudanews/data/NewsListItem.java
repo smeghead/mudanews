@@ -19,6 +19,7 @@ public class NewsListItem {
 	private byte[] image_;
 	private Bitmap imageBitmap_;
 	private int viewCount_;
+	private boolean favorite_;
 	
 	public NewsListItem() {
 		title_ = "";
@@ -118,6 +119,14 @@ public class NewsListItem {
 
 	public void setImageBitmap(Bitmap imageBitmap) {
 		imageBitmap_ = imageBitmap;
+	}
+
+	public boolean isFavorite() {
+		return favorite_;
+	}
+
+	public void setFavorite(boolean favorite) {
+		favorite_ = favorite;
 	}
 
 	

@@ -54,9 +54,11 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 			db = helper.getWritableDatabase();
 
 			c = db.rawQuery(
-					"select f.id, f.title, f.description, f.link, f.source, count(v.id) " +
+					"select f.id, f.title, f.description, f.link, f.source, count(v.id), fav.id " +
 					"from feeds as f " +
 					"left join view_logs as v on v.feed_id = f.id " +
+					"left join favorites as fav on fav.feed_id = f.id " +
+					"where f.deleted = 0 " +
 					"group by f.id " +
  					"order by published_at desc " + 
 					"limit ? " +
@@ -73,6 +75,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 				item.setLink(c.getString(3));
 				item.setSource(c.getString(4));
 				item.setViewCount(c.getInt(5));
+				item.setFavorite(c.getInt(6) == 1);
 				result.add(item);
 				c.moveToNext();
 			}

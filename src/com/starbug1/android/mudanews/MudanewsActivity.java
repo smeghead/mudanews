@@ -6,15 +6,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -47,6 +46,7 @@ import android.widget.ViewFlipper;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
+import com.starbug1.android.mudanews.utils.AppUtils;
 import com.starbug1.android.mudanews.utils.UrlUtils;
 
 public class MudanewsActivity extends Activity {
@@ -57,7 +57,8 @@ public class MudanewsActivity extends Activity {
 	private Animation anim_left_in_, anim_left_out_, anim_right_in_,
 			anim_right_out_;
 	private ProgressDialog progressDialog_;
-	DatabaseHelper dbHelper_ = null;
+	private DatabaseHelper dbHelper_ = null;
+
 
 	private void setupAnim() {
 		anim_left_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this,
@@ -116,14 +117,14 @@ public class MudanewsActivity extends Activity {
 		items_ = new ArrayList<NewsListItem>();
 		adapter_ = new NewsListAdapter(this, items_);
 
-		String versionName = getVersionName();
+		String versionName = AppUtils.getVersionName(this);
 		TextView version = (TextView) this.findViewById(R.id.version);
 		version.setText(versionName);
 		TextView version2 = (TextView) this.findViewById(R.id.version2);
 		version2.setText(versionName);
 
-		GridView view = (GridView) this.findViewById(R.id.grid);
-		view.setOnItemClickListener(new OnItemClickListener() {
+		GridView grid = (GridView) this.findViewById(R.id.grid);
+		grid.setOnItemClickListener(new OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> adapter, View view,
 					int position, long id) {
@@ -193,7 +194,57 @@ public class MudanewsActivity extends Activity {
 				progressDialog_.show();
 			}
 		});
-		
+		grid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+			
+			public boolean onItemLongClick(AdapterView<?> arg0, View viewArg,
+					int position, long arg3) {
+				final View v = viewArg;
+				final NewsListItem item = items_.get(position);
+//			    Integer item_index = (Integer)v.getTag() - 1;
+				AlertDialog.Builder ad = new AlertDialog.Builder(MudanewsActivity.this);
+				ad.setTitle("記事のアクション");
+				ad.setItems(R.array.arrays_entry_actions, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						Log.d("NewsListAdapter", "longclickmenu selected");
+						String processName = MudanewsActivity.this.getResources().getStringArray(R.array.arrays_entry_action_values)[which];
+						final SQLiteDatabase db = dbHelper_.getWritableDatabase();
+						try {
+							if ("make_favorite".equals(processName)) {
+								//お気に入り
+								db.execSQL(
+										"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
+										new String[] { String.valueOf(item.getId()) });
+							} else if ("make_read".equals(processName)) {
+								//既読にする
+								db.execSQL(
+										"insert into view_logs (feed_id, created_at) values (?, current_timestamp)",
+										new String[] { String.valueOf(item.getId()) });
+								item.setViewCount(item.getViewCount() + 1);
+								ImageView newIcon = (ImageView) v
+										.findViewById(R.id.newEntry);
+								newIcon.setVisibility(ImageView.GONE);
+							} else if ("delete".equals(processName)) {
+								//削除
+								db.execSQL(
+										"update feeds set deleted = 1 where id = ?",
+										new String[] { String.valueOf(item.getId()) });
+								items_.remove(item);
+								page_ = 0;
+								updateList(page_);
+							}
+						} catch (Exception e) {
+							Log.e("MudanewsActivity", "failed to upate entry action.");
+						} finally {
+							db.close();
+						}
+					}
+				});
+				AlertDialog alert = ad.create();
+				alert.show();
+				return true;
+			}
+		});
+
 		final Button more = (Button) this.findViewById(R.id.more);
 		more.setVisibility(Button.GONE);
 		more.setOnClickListener(new OnClickListener() {
@@ -203,7 +254,7 @@ public class MudanewsActivity extends Activity {
 			}
 		});
 
-		view.setOnScrollListener(new OnScrollListener() {
+		grid.setOnScrollListener(new OnScrollListener() {
 			private boolean stayBottom = false;
 
 			public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -231,7 +282,7 @@ public class MudanewsActivity extends Activity {
 			}
 		});
 
-		// TODO 初回起動なら、feed取得 ボタンを表示する
+		// 初回起動なら、feed取得 ボタンを表示する
 		if (dbHelper_.entryIsEmpty()) {
 			final Button fetchfeeds = (Button) this.findViewById(R.id.fetchfeeds);
 			fetchfeeds.setOnClickListener(new OnClickListener() {
@@ -340,19 +391,6 @@ public class MudanewsActivity extends Activity {
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		setupGridColumns();
-	}
-
-	private String getVersionName() {
-		PackageInfo packageInfo = null;
-		try {
-			packageInfo = getPackageManager().getPackageInfo(
-					this.getClass().getPackage().getName(),
-					PackageManager.GET_META_DATA);
-			return "Version " + packageInfo.versionName;
-		} catch (NameNotFoundException e) {
-			Log.e("NudaNewsActivity", "failed to retreive version info.");
-		}
-		return "";
 	}
 
 	@Override

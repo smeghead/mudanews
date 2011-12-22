@@ -8,11 +8,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,6 +62,20 @@ public class FetchFeedService extends Service {
 	private boolean isRunning = false;
 	SharedPreferences sharedPreferences_ = null;
 
+	private enum Feeds {
+		labaq("らばQ", "http://labaq.com/index.rdf"),
+		itaNews("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"),
+		gigazine("GIGAZINE", "http://gigazine.net/news/rss_2.0/");
+
+		public String name = "";
+		public String url = "";
+		
+		private Feeds(String name, String url) {
+			this.name = name;
+			this.url = url;
+		}
+	}
+	
 	@Override
 	public void onCreate() {
 		Log.d("FetchFeedService", "onCreate");
@@ -67,7 +89,7 @@ public class FetchFeedService extends Service {
 			GregorianCalendar calendar = new GregorianCalendar();
 			alarmManager.setInexactRepeating(
 					AlarmManager.RTC_WAKEUP,
-					calendar.getTimeInMillis() + 1 * 1000,
+					calendar.getTimeInMillis() + 1000 * 10,
 					1000 * 60 * clowlIntervals,
 					sender); 
 		}
@@ -112,33 +134,68 @@ public class FetchFeedService extends Service {
 
 		}
 	}
-			
+	
+	private class FeedTask implements Callable<Integer> {
+        
+		public String name = "";
+		public String url = "";
+        
+        public FeedTask(String name, String url) {
+        	this.name = name;
+        	this.url = url;
+        }
+        
+        public Integer call() throws Exception {
+			return Integer.valueOf(registerNews(parseXml(this.name, this.url)));
+        }
+        
+    }
+
 	public int updateFeeds() {
 		if (!InternetStatus.isConnected(getApplicationContext())) {
 			Log.i("FetchFeedService", "no connection.");
 			return 0;
 		}
 		int count = 0;
-		try {
-			count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
-			count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
-			count += registerNews(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/"));
-//			// 全てのフィードを取得すると処理が重たいので、1度に1つだけを取得する
-//			int random = (int) Math.round(Math.random() * 2);
-//			switch (random) {
-//			case 0:
-//				Log.d("FetchFeedService", "fetch らばQ");
-//				count += registerNews(parseXml("らばQ", "http://labaq.com/index.rdf"));
-//				break;
-//			case 1:
-//				Log.d("FetchFeedService", "fetch 痛いニュース");
-//				count += registerNews(parseXml("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf"));
-//				break;
-//			case 2:
-//				Log.d("FetchFeedService", "fetch GIGAZINE");
-//				count += registerNews(parseXml("GIGAZINE", "http://gigazine.net/news/rss_2.0/"));
-//				break;
-//			}
+		BlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>(10);
+        final ThreadPoolExecutor exec = new ThreadPoolExecutor(5, 5, 0,
+                TimeUnit.MILLISECONDS, queue);
+        
+        // 結果を受け取るリスト
+        final List<Future<Integer>> result = new ArrayList<Future<Integer>>();
+
+        try {
+	        // キューへの順次追加
+	        try {
+	            for (Feeds f : Feeds.values()) {
+	                if (queue.remainingCapacity() > 0) {
+	                	Log.d("FetchFeedService", "register feedtask:" + f.name);
+	                    result.add(exec.submit(new FeedTask(f.name, f.url)));
+	                } else {
+	                	Log.d("FetchFeedService", "waiting:" + f.name);
+	                    Thread.sleep(1000);
+	                }
+	            }
+	        } catch (InterruptedException e) {
+	        	Log.e("FetchFeedService", "queue error " + e.getMessage());
+	            throw new RuntimeException(e);
+	        } finally {
+	            exec.shutdown();
+	        }
+	        
+	        // 結果表示
+	        for (int i = 0; i < result.size(); i++) {
+	            try {
+                	Log.d("FetchFeedService", "retrieve result");
+	                count += result.get(i).get();
+	            } catch (InterruptedException e) {
+		        	Log.e("FetchFeedService", "queue error " + e.getMessage());
+	                throw new RuntimeException(e);
+	            } catch (ExecutionException e) {
+		        	Log.e("FetchFeedService", "queue error " + e.getMessage());
+	                throw new RuntimeException(e);
+	            }
+	        }
 			Log.d("FetchFeedService", "fetched");
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());
@@ -154,7 +211,9 @@ public class FetchFeedService extends Service {
 		InputStream is = null;
 		try {
 			URL url = new URL(urlString);
-			is = url.openConnection().getInputStream();
+			URLConnection conn = url.openConnection();
+			conn.setConnectTimeout(1000 * 5);
+			is = conn.getInputStream();
 
 			parser.setInput(is, null);
 			int eventType = parser.getEventType();
@@ -358,7 +417,7 @@ public class FetchFeedService extends Service {
 			return registerCount;
 		} finally {
 			if (c != null) c.close();
-			if (db.isOpen()) db.close();
+			if (db != null && db.isOpen()) db.close();
 		}
 	}
 
