@@ -53,11 +53,9 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			title_ = (TextView) view.findViewById(R.id.item_title);
 			title_.setText(title);
 			ImageView newEntry = (ImageView) view.findViewById(R.id.newEntry);
-			if (item.getViewCount() > 0) {
-				newEntry.setVisibility(ImageView.GONE);
-			} else {
-				newEntry.setVisibility(ImageView.VISIBLE);
-			}
+			newEntry.setVisibility(item.getViewCount() > 0 ? ImageView.GONE : ImageView.VISIBLE);
+			ImageView isFavorite = (ImageView) view.findViewById(R.id.favorite);
+			isFavorite.setVisibility(item.isFavorite() ? ImageView.VISIBLE : ImageView.GONE);
 
 			if (item.getImage() != null) {
 				Bitmap b = item.getImageBitmap();

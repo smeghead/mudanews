@@ -221,7 +221,7 @@ public class MudanewsActivity extends Activity {
 				ad.setTitle("記事のアクション");
 				ad.setItems(R.array.arrays_entry_actions, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
-						Log.d("NewsListAdapter", "longclickmenu selected");
+						Log.d("NewsListAdapter", "longclickmenu selected id:" + item.getId());
 						String processName = MudanewsActivity.this.getResources().getStringArray(R.array.arrays_entry_action_values)[which];
 						final SQLiteDatabase db = dbHelper_.getWritableDatabase();
 						try {
@@ -230,6 +230,9 @@ public class MudanewsActivity extends Activity {
 								db.execSQL(
 										"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
 										new String[] { String.valueOf(item.getId()) });
+								ImageView favorite = (ImageView) v
+										.findViewById(R.id.favorite);
+								favorite.setVisibility(ImageView.VISIBLE);
 							} else if ("make_read".equals(processName)) {
 								//既読にする
 								db.execSQL(
@@ -351,9 +354,13 @@ public class MudanewsActivity extends Activity {
 		if (isViewingEntry_) {
 			menu.findItem(R.id.menu_update_feeds).setVisible(false);
 			menu.findItem(R.id.menu_share).setVisible(true);
+			menu.findItem(R.id.menu_settings).setVisible(false);
+			menu.findItem(R.id.menu_favorite).setVisible(true);
 		} else {
 			menu.findItem(R.id.menu_share).setVisible(false);
 			menu.findItem(R.id.menu_update_feeds).setVisible(true);
+			menu.findItem(R.id.menu_settings).setVisible(true);
+			menu.findItem(R.id.menu_favorite).setVisible(false);
 		}
 		return super.onMenuOpened(featureId, menu);
 	}
@@ -376,10 +383,31 @@ public class MudanewsActivity extends Activity {
 		case R.id.menu_review:
 			gotoMarket();
 			break;
+		case R.id.menu_favorite:
+			favorite();
+			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	private void favorite() {
+		if (currentItem_ == null) return;
+		Log.d("MudanewsActivity", "favorite id:" + currentItem_.getId());
+		
+		final SQLiteDatabase db = dbHelper_.getWritableDatabase();
+		try {
+			// お気に入り
+			db.execSQL(
+					"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
+					new String[] { String.valueOf(currentItem_.getId()) });
+		} catch (Exception e) {
+			Log.e("MudanewsActivity", "failed to favorite.");
+		} finally {
+			if (db != null && db.isOpen())
+				db.close();
+		}
+	}
+	
 	private void share() {
 		if (currentItem_ == null) {
 			return;

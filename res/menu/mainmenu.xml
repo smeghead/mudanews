@@ -6,5 +6,6 @@
     <item android:title="共有" android:id="@+id/menu_share" android:icon="@android:drawable/ic_menu_share"></item><item android:title="設定" android:icon="@android:drawable/ic_menu_preferences" android:id="@+id/menu_settings"></item>
     
     
+    <item android:id="@+id/menu_favorite" android:title="お気に入り" android:icon="@android:drawable/btn_star"></item>
     
 </menu>

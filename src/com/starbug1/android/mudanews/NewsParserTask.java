@@ -75,7 +75,7 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 				item.setLink(c.getString(3));
 				item.setSource(c.getString(4));
 				item.setViewCount(c.getInt(5));
-				item.setFavorite(c.getInt(6) == 1);
+				item.setFavorite(c.getInt(6) > 0);
 				result.add(item);
 				c.moveToNext();
 			}
