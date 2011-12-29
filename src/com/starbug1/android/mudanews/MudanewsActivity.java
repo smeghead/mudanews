@@ -1,5 +1,6 @@
 package com.starbug1.android.mudanews;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -29,9 +30,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.AbsListView;
@@ -107,7 +110,7 @@ public class MudanewsActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
+		
 		dbHelper_ = new DatabaseHelper(MudanewsActivity.this);
 		setupAnim();
 		flipper_ = (ViewFlipper) this.findViewById(R.id.flipper);
@@ -149,6 +152,7 @@ public class MudanewsActivity extends Activity {
 
 				WebView entryView = (WebView) MudanewsActivity.this
 						.findViewById(R.id.entryView);
+				
 				entryView.setWebViewClient(new WebViewClient() {
 
 					@Override
@@ -178,7 +182,7 @@ public class MudanewsActivity extends Activity {
 					@Override
 					public boolean shouldOverrideUrlLoading(WebView view,
 							String url) {
-						if (!UrlUtils.isSameDomain(view.getOriginalUrl(), url)) {
+						if (!url.startsWith("file") && !UrlUtils.isSameDomain(view.getOriginalUrl(), url)) {
 							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
 									.parse(url));
 							startActivity(intent);
@@ -189,7 +193,17 @@ public class MudanewsActivity extends Activity {
 						return super.shouldOverrideUrlLoading(view, url);
 					}
 				});
-				entryView.getSettings().setJavaScriptEnabled(true);
+				WebSettings ws = entryView.getSettings();
+				ws.setBuiltInZoomControls(true);
+				ws.setLoadWithOverviewMode(true);
+				ws.setPluginsEnabled(true);
+				ws.setUseWideViewPort(true);
+				ws.setJavaScriptEnabled(true);
+				ws.setAppCacheMaxSize(1024 * 1024 * 64); //64MB
+				ws.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+				ws.setDomStorageEnabled(true);
+				ws.setAppCacheEnabled(true);
+				entryView.setVerticalScrollbarOverlay(true);
 				entryView.loadUrl(UrlUtils.mobileUrl(item.getLink()));
 				progressDialog_ = new ProgressDialog(MudanewsActivity.this);
 				progressDialog_.setMessage("読み込み中...");
@@ -356,6 +370,12 @@ public class MudanewsActivity extends Activity {
 		case R.id.menu_share:
 			share();
 			break;
+		case R.id.menu_notify_all:
+			shareAll();
+			break;
+		case R.id.menu_review:
+			gotoMarket();
+			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -368,6 +388,20 @@ public class MudanewsActivity extends Activity {
 	    intent.setType("text/plain");
 	    intent.putExtra(Intent.EXTRA_TEXT, currentItem_.getTitle() + " " + currentItem_.getLink() + " #無駄新聞");
 	    startActivity(Intent.createChooser(intent, "共有"));
+	}
+	
+	private void shareAll() {
+		Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+	    intent.setType("text/plain");
+	    intent.putExtra(Intent.EXTRA_TEXT, "一番カジュアルなAndroid用 新聞アプリ\n http://goo.gl/c0j2H #無駄新聞");
+	    startActivity(Intent.createChooser(intent, "紹介"));
+	}
+	
+	private void gotoMarket() {
+		Intent intent = new Intent(
+				android.content.Intent.ACTION_VIEW,
+				Uri.parse("market://details?id=com.starbug1.android.mudanews"));
+	    startActivity(Intent.createChooser(intent, "紹介"));
 	}
 	
 	private void settings() {
