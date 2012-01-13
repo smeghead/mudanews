@@ -6,15 +6,18 @@ package com.starbug1.android.mudanews;
 import java.util.List;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.starbug1.android.mudanews.data.NewsListItem;
 
@@ -25,9 +28,11 @@ import com.starbug1.android.mudanews.data.NewsListItem;
 public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 	private LayoutInflater inflater_;
 	private TextView title_;
+	private MudanewsActivity context_;
 
 	public NewsListAdapter(Context context, List<NewsListItem> objects) {
 		super(context, 0, objects);
+		context_ = (MudanewsActivity)context;
 		inflater_ = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
@@ -45,7 +50,7 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			Log.w("NewsListAdapter", "position invalid!");
 			return null;
 		}
-		NewsListItem item = this.getItem(position);
+		final NewsListItem item = this.getItem(position);
 		if (item != null) {
 			view.setTag(item);
 			
@@ -55,8 +60,39 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			ImageView newEntry = (ImageView) view.findViewById(R.id.newEntry);
 			newEntry.setVisibility(item.getViewCount() > 0 ? ImageView.GONE : ImageView.VISIBLE);
 			ImageView isFavorite = (ImageView) view.findViewById(R.id.favorite);
-			isFavorite.setVisibility(item.isFavorite() ? ImageView.VISIBLE : ImageView.GONE);
-
+			isFavorite.setImageResource(item.isFavorite()
+					? android.R.drawable.btn_star_big_on
+					: android.R.drawable.btn_star_big_off);
+			isFavorite.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					boolean add = !item.isFavorite();
+					//TODO locate right place.
+					//お気に入り
+					final SQLiteDatabase db = context_.getDbHelper().getWritableDatabase();
+					try {
+						
+						db.execSQL(
+								add
+									? "insert into favorites (feed_id, created_at) values (?, current_timestamp)"
+									: "delete from favorites where feed_id = ?",
+								new String[] { String.valueOf(item.getId()) });
+						item.setFavorite(add);
+						ImageView favorite = (ImageView) v
+								.findViewById(R.id.favorite);
+						favorite.setImageResource(add
+								? android.R.drawable.btn_star_big_on
+								: android.R.drawable.btn_star_big_off);
+						if (add) {
+							Toast.makeText(context_, item.getTitle() + "をお気に入りにしました", Toast.LENGTH_LONG).show();
+						}
+					} catch (Exception e) {
+						Log.e("MudanewsActivity", "failed to upate entry action.");
+					} finally {
+						db.close();
+					}
+				}
+			});
 			if (item.getImage() != null) {
 				Bitmap b = item.getImageBitmap();
 				if (b == null) {

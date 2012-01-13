@@ -89,7 +89,7 @@ public class FetchFeedService extends Service {
 			GregorianCalendar calendar = new GregorianCalendar();
 			alarmManager.setInexactRepeating(
 					AlarmManager.RTC_WAKEUP,
-					calendar.getTimeInMillis() + 1000 * 10,
+					calendar.getTimeInMillis() + 1000 * 60 * 5,
 					1000 * 60 * clowlIntervals,
 					sender); 
 		}
@@ -99,39 +99,45 @@ public class FetchFeedService extends Service {
 	public void onStart(Intent intent, int startId) {
 		Log.d("FetchFeedService", "onStart");
 
-		if (!isRunning) {
-			try {
-				isRunning = true;
-				
-				Log.d("FetchFeedService", "fetch feeds start.....");
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
 				fetchFeeds();
-			} finally {
-				isRunning = false;
 			}
-		}
+		}).start();
 
 		super.onStart(intent, startId);
 	}
 
 	private void fetchFeeds() {
-		int count = updateFeeds();
+		if (isRunning) return;
+		
+		if (!isRunning) {
+			try {
+				isRunning = true;
+				
+				Log.d("FetchFeedService", "fetch feeds start.....");
+				int count = updateFeeds();
 
-		if (count > 0) {
-			NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-			Notification notification = new Notification(R.drawable.notify,
-					"ニュースが入りました", System.currentTimeMillis());
-			if (sharedPreferences_.getBoolean("pref_notify_sound", true)) {
-				notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
+				if (count > 0) {
+					NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+					Notification notification = new Notification(R.drawable.notify,
+							"ニュースが入りました", System.currentTimeMillis());
+					if (sharedPreferences_.getBoolean("pref_notify_sound", true)) {
+						notification.sound = Settings.System.DEFAULT_NOTIFICATION_URI;
+					}
+
+					Intent intent = new Intent(FetchFeedService.this,
+							MudanewsActivity.class);
+					PendingIntent contentIntent = PendingIntent.getActivity(
+							FetchFeedService.this, 0, intent, 0);
+					notification.setLatestEventInfo(getApplicationContext(), "無駄新聞",
+							String.valueOf(count) + "件の新着記事を追加しました", contentIntent);
+					manager.notify(R.string.app_name, notification);
+				}
+			} finally {
+				isRunning = false;
 			}
-
-			Intent intent = new Intent(FetchFeedService.this,
-					MudanewsActivity.class);
-			PendingIntent contentIntent = PendingIntent.getActivity(
-					FetchFeedService.this, 0, intent, 0);
-			notification.setLatestEventInfo(getApplicationContext(), "無駄新聞",
-					String.valueOf(count) + "件の新着記事を追加しました", contentIntent);
-			manager.notify(R.string.app_name, notification);
-
 		}
 	}
 	
@@ -151,9 +157,15 @@ public class FetchFeedService extends Service {
         
     }
 
+	private static boolean isWorking = false;
+	
 	public int updateFeeds() {
 		if (!InternetStatus.isConnected(getApplicationContext())) {
 			Log.i("FetchFeedService", "no connection.");
+			return 0;
+		}
+		if (isWorking) {
+			Log.i("FetchFeedService", "already working another task.");
 			return 0;
 		}
 		int count = 0;
@@ -165,6 +177,7 @@ public class FetchFeedService extends Service {
         final List<Future<Integer>> result = new ArrayList<Future<Integer>>();
 
         try {
+    		isWorking = true;
 	        // キューへの順次追加
 	        try {
 	            for (Feeds f : Feeds.values()) {
@@ -200,6 +213,8 @@ public class FetchFeedService extends Service {
 		} catch(Exception e) {
 			Log.e("NewsParserTask", e.toString());
 			throw new AppException("failed to background task.", e);
+		} finally {
+			isWorking = false;
 		}
 		return count;
 	}
@@ -392,26 +407,28 @@ public class FetchFeedService extends Service {
 				
 				item = fetchImage(item);
 
-				ContentValues values = new ContentValues();
-		        values.put("source", item.getSource());
-		        values.put("title", item.getTitle());
-		        values.put("link", item.getLink());
-		        values.put("description", item.getDescription());
-		        values.put("category", item.getCategory());
-		        values.put("published_at", item.getPublishedAt());
-		        values.put("created_at", now.getTime());
-		        long id = db.insert("feeds", null, values);
+				synchronized (Lock.obj) {
+					ContentValues values = new ContentValues();
+			        values.put("source", item.getSource());
+			        values.put("title", item.getTitle());
+			        values.put("link", item.getLink());
+			        values.put("description", item.getDescription());
+			        values.put("category", item.getCategory());
+			        values.put("published_at", item.getPublishedAt());
+			        values.put("created_at", now.getTime());
+			        long id = db.insert("feeds", null, values);
 
-		        registerCount++;
+			        registerCount++;
 
-		        if (item.getImage() == null) {
-		        	continue;
-		        }
-		        values = new ContentValues();
-		        values.put("feed_id", id);
-		        values.put("image", item.getImage());
-		        values.put("created_at", now.getTime());
-		        db.insert("images", null, values);
+			        if (item.getImage() == null) {
+			        	continue;
+			        }
+			        values = new ContentValues();
+			        values.put("feed_id", id);
+			        values.put("image", item.getImage());
+			        values.put("created_at", now.getTime());
+			        db.insert("images", null, values);
+				}
 			}
 			db.close();
 			return registerCount;
@@ -448,4 +465,8 @@ public class FetchFeedService extends Service {
         //onUnbindをreturn trueでoverrideすると次回バインド時にonRebildが呼ばれる
         return true;
     }
+}
+
+class Lock {
+	static Object obj = new Object();
 }

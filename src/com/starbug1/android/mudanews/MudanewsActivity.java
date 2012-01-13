@@ -43,8 +43,10 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.starbug1.android.mudanews.data.DatabaseHelper;
@@ -108,14 +110,18 @@ public class MudanewsActivity extends Activity {
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.d("MudanewsActivity", "onCreate");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		Log.d("MudanewsActivity", "setContentView");
 		
 		dbHelper_ = new DatabaseHelper(MudanewsActivity.this);
 		setupAnim();
 		flipper_ = (ViewFlipper) this.findViewById(R.id.flipper);
+		Log.d("MudanewsActivity", "setupAnim");
 
 		doBindService();
+		Log.d("MudanewsActivity", "bindService");
 
 		page_ = 0;
 		items_ = new ArrayList<NewsListItem>();
@@ -230,9 +236,11 @@ public class MudanewsActivity extends Activity {
 								db.execSQL(
 										"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
 										new String[] { String.valueOf(item.getId()) });
+								item.setFavorite(true);
 								ImageView favorite = (ImageView) v
 										.findViewById(R.id.favorite);
-								favorite.setVisibility(ImageView.VISIBLE);
+								favorite.setImageResource(android.R.drawable.btn_star_big_on);
+								Toast.makeText(MudanewsActivity.this, item.getTitle() + "をお気に入りにしました", Toast.LENGTH_LONG).show();
 							} else if ("make_read".equals(processName)) {
 								//既読にする
 								db.execSQL(
@@ -242,6 +250,7 @@ public class MudanewsActivity extends Activity {
 								ImageView newIcon = (ImageView) v
 										.findViewById(R.id.newEntry);
 								newIcon.setVisibility(ImageView.GONE);
+								Toast.makeText(MudanewsActivity.this, item.getTitle() + "を既読にしました", Toast.LENGTH_LONG).show();
 							} else if ("delete".equals(processName)) {
 								//削除
 								db.execSQL(
@@ -249,6 +258,7 @@ public class MudanewsActivity extends Activity {
 										new String[] { String.valueOf(item.getId()) });
 								items_.remove(item);
 								page_ = 0;
+								Toast.makeText(MudanewsActivity.this, item.getTitle() + "を削除しました", Toast.LENGTH_LONG).show();
 								updateList(page_);
 							}
 						} catch (Exception e) {
@@ -263,6 +273,7 @@ public class MudanewsActivity extends Activity {
 				return true;
 			}
 		});
+		Log.d("MudanewsActivity", "grid setup");
 
 		final Button more = (Button) this.findViewById(R.id.more);
 		more.setVisibility(Button.GONE);
@@ -272,6 +283,7 @@ public class MudanewsActivity extends Activity {
 				updateList(page_);
 			}
 		});
+		Log.d("MudanewsActivity", "more button");
 
 		grid.setOnScrollListener(new OnScrollListener() {
 			private boolean stayBottom = false;
@@ -300,6 +312,7 @@ public class MudanewsActivity extends Activity {
 						+ visibleItemCount);
 			}
 		});
+		Log.d("MudanewsActivity", "scroll");
 
 		// 初回起動なら、feed取得 ボタンを表示する
 		if (dbHelper_.entryIsEmpty()) {
@@ -400,6 +413,8 @@ public class MudanewsActivity extends Activity {
 			db.execSQL(
 					"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
 					new String[] { String.valueOf(currentItem_.getId()) });
+			currentItem_.setFavorite(true);
+			Toast.makeText(MudanewsActivity.this, currentItem_.getTitle() + "をお気に入りにしました", Toast.LENGTH_LONG).show();
 		} catch (Exception e) {
 			Log.e("MudanewsActivity", "failed to favorite.");
 		} finally {
@@ -445,13 +460,18 @@ public class MudanewsActivity extends Activity {
 		new Thread() {
 			@Override
 			public void run() {
-				fetchFeedService_.updateFeeds();
+				final int count = fetchFeedService_.updateFeeds();
 				handler_.post(new Runnable() {
 					public void run() {
 						progressDialog_.dismiss();
 						page_ = 0;
 						items_.clear();
 						updateList(page_);
+						if (count == 0) {
+							Toast.makeText(MudanewsActivity.this, "新しい記事はありませんでした", Toast.LENGTH_LONG).show();
+						} else {
+							Toast.makeText(MudanewsActivity.this, count + "件の記事を追加しました", Toast.LENGTH_LONG).show();
+						}
 					}
 				});
 			}
@@ -500,5 +520,9 @@ public class MudanewsActivity extends Activity {
 			}
 		}
 		return super.dispatchKeyEvent(e);
+	}
+
+	public DatabaseHelper getDbHelper() {
+		return dbHelper_;
 	}
 }
