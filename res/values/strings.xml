@@ -2,5 +2,4 @@
 <resources>
     <string name="hello">Hello World, MudanewsActivity!</string>
     <string name="app_name">無駄新聞</string>
-    <string name="menu_updated_feeds">新着記事チェック</string>
 </resources>
