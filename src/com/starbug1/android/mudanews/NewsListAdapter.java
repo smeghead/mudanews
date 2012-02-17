@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -93,14 +94,19 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 					}
 				}
 			});
+			GridView grid = (GridView) context_.findViewById(R.id.grid);
+			int size = grid.getWidth() / context_.column_count_;
+			Log.d("NewsListAdapter", "size:" + size);
 			if (item.getImage() != null) {
-				Bitmap b = item.getImageBitmap();
-				if (b == null) {
+				Bitmap bOrg = item.getImageBitmap();
+				if (bOrg == null) {
 					byte[] data = item.getImage();
 					Log.d("NewsListAdapter", "data.length:" + data.length);
-					b = BitmapFactory.decodeByteArray(data, 0, data.length);
-					item.setImageBitmap(b);
+					bOrg = BitmapFactory.decodeByteArray(data, 0, data.length);
+//					item.setImageBitmap(b);
 				}
+				// サイズ調整
+				Bitmap b = Bitmap.createScaledBitmap(bOrg, size, size, false);
 				ImageView image = (ImageView) view
 						.findViewById(R.id.item_image);
 				image.setImageDrawable(null);

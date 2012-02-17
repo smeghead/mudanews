@@ -22,6 +22,7 @@
 		android:textColor="#eeffffff"
 		android:textSize="10sp"
 		android:maxHeight="58px"
+		android:layout_marginBottom="2px"
 		android:background="#99000000"/>
 	<LinearLayout android:id="@+id/linearLayout1" android:layout_height="match_parent" android:layout_gravity="right|top" android:layout_width="wrap_content" android:layout_margin="5px" android:weightSum="1">
 		<ImageView android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/newentry" android:layout_gravity="right" android:id="@+id/newEntry"></ImageView>

@@ -1,6 +1,5 @@
 package com.starbug1.android.mudanews;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -30,7 +29,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -43,7 +41,6 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -337,13 +334,14 @@ public class MudanewsActivity extends Activity {
 
 	private NewsParserTask task_ = null;
 
+	public int column_count_ = 1;
 	private void setupGridColumns() {
 		WindowManager w = getWindowManager();
 		Display d = w.getDefaultDisplay();
 		int width = d.getWidth();
-		int column_count = width / 160;
+		column_count_ = width / 160;
 		GridView grid = (GridView) this.findViewById(R.id.grid);
-		grid.setNumColumns(column_count);
+		grid.setNumColumns(column_count_);
 	}
 
 	private void updateList(int page) {
