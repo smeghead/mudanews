@@ -61,6 +61,7 @@ public class FetchFeedService extends Service {
 	static final String TAG = "FetchFeedService";
 	private boolean isRunning = false;
 	SharedPreferences sharedPreferences_ = null;
+	
 
 	private enum Feeds {
 		labaq("らばQ", "http://labaq.com/index.rdf"),
@@ -392,7 +393,10 @@ public class FetchFeedService extends Service {
 	private int registerNews(List<NewsListItem> list) {
 		int registerCount = 0;
 		DatabaseHelper helper = new DatabaseHelper(this);
-		final SQLiteDatabase db = helper.getWritableDatabase();
+		SQLiteDatabase db = null;
+		synchronized (Lock.obj) {
+			db = helper.getWritableDatabase();
+		}
 		Date now = new Date();
 //		db.execSQL("delete from feeds");
 //		db.execSQL("delete from images");
