@@ -102,8 +102,11 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 				if (bOrg == null) {
 					byte[] data = item.getImage();
 					Log.d("NewsListAdapter", "data.length:" + data.length);
-					bOrg = BitmapFactory.decodeByteArray(data, 0, data.length);
-//					item.setImageBitmap(b);
+					try {
+						bOrg = BitmapFactory.decodeByteArray(data, 0, data.length);
+					} catch (OutOfMemoryError e) {
+						Log.e("NewsListAdapter", e.getMessage());
+					}
 				}
 				// サイズ調整
 				Bitmap b = bOrg;

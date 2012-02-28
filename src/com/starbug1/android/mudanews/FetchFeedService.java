@@ -382,6 +382,8 @@ public class FetchFeedService extends Service {
 				Log.e("FetchFeedService", "[IOException] failed to get image." + e.getMessage() + " " + imageUrl);
 			} catch (Exception e) {
 				Log.e("FetchFeedService", "[Exception] failed to get image." + e.getMessage() + " " + imageUrl);
+			} catch (OutOfMemoryError e) {
+				Log.e("FetchFeedService", "[Exception] failed to get image." + e.getMessage() + " " + imageUrl);
 			} finally {
 				try {
 					if (is != null) is.close();
