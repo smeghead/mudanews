@@ -106,7 +106,10 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 //					item.setImageBitmap(b);
 				}
 				// サイズ調整
-				Bitmap b = Bitmap.createScaledBitmap(bOrg, size, size, false);
+				Bitmap b = bOrg;
+				if (size != 160) {
+					b = Bitmap.createScaledBitmap(bOrg, size, size, false);
+				}
 				ImageView image = (ImageView) view
 						.findViewById(R.id.item_image);
 				image.setImageDrawable(null);
