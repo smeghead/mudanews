@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.starbug1.android.mudanews"
-        android:versionCode="127" android:versionName="1.2.8">
+        android:versionCode="128" android:versionName="1.2.8">
     <uses-sdk android:minSdkVersion="7"/>
-
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="false" android:theme="@style/CustomTheme">
         <activity android:name=".MudanewsActivity"
                 android:label="@string/app_name"
@@ -29,8 +31,30 @@
         <activity
                 android:name="com.google.ads.AdActivity" 
                 android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+        <!-- PaRappa Support Activity -->
+        <activity
+            android:name="me.parappa.sdk.activity.SupportActivity"
+            android:label="@string/app_name"
+            android:configChanges="orientation|keyboardHidden">
+        </activity>
+        <!-- PaRappa Notify Activity -->
+        <activity
+            android:name="me.parappa.sdk.activity.NotifyActivity"
+            android:label="@string/app_name"
+            android:configChanges="orientation|keyboardHidden" />
+        <!-- PaRappa Notify Service -->
+        <service android:name="me.parappa.sdk.service.NotifyService" />
+        <!-- PaRappa Receiver -->
+        <receiver android:name="me.parappa.sdk.receiver.StartReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+        <!-- PaRappa Application Code Setting -->
+        <meta-data android:name="PARAPPA_APP_CODE" android:value="pLvsV7y2"/>
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    
     <meta-data android:name="ADMOB_PUBLISHER_ID" android:value="a14edaf2bb22e23"/>
 </manifest>

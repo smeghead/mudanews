@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import me.parappa.sdk.PaRappa;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -61,7 +63,7 @@ public class MudanewsActivity extends Activity {
 	private ProgressDialog progressDialog_;
 	private DatabaseHelper dbHelper_ = null;
 	private NewsListItem currentItem_ = null;
-
+	 private PaRappa parappa_;
 
 	private void setupAnim() {
 		anim_left_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this,
@@ -330,6 +332,7 @@ public class MudanewsActivity extends Activity {
 
 		NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		manager.cancelAll();
+		parappa_ = new PaRappa(this);
 	}
 
 	private NewsParserTask task_ = null;
@@ -392,10 +395,13 @@ public class MudanewsActivity extends Activity {
 			shareAll();
 			break;
 		case R.id.menu_review:
-			gotoMarket();
+			parappa_.gotoMarket();
 			break;
 		case R.id.menu_favorite:
 			favorite();
+			break;
+		case R.id.menu_support:
+			parappa_.startSupportActivity();
 			break;
 		}
 		return super.onOptionsItemSelected(item);
@@ -425,26 +431,13 @@ public class MudanewsActivity extends Activity {
 		if (currentItem_ == null) {
 			return;
 		}
-		Intent intent = new Intent(android.content.Intent.ACTION_SEND);
-	    intent.setType("text/plain");
-	    intent.putExtra(Intent.EXTRA_TEXT, currentItem_.getTitle() + " " + currentItem_.getLink() + " #無駄新聞");
-	    startActivity(Intent.createChooser(intent, "共有"));
+		parappa_.shareString(currentItem_.getTitle() + " " + currentItem_.getLink() + " #無駄新聞", "共有");
 	}
 	
 	private void shareAll() {
-		Intent intent = new Intent(android.content.Intent.ACTION_SEND);
-	    intent.setType("text/plain");
-	    intent.putExtra(Intent.EXTRA_TEXT, "一番カジュアルなAndroid用 新聞アプリ\n http://goo.gl/c0j2H #無駄新聞");
-	    startActivity(Intent.createChooser(intent, "紹介"));
+		parappa_.shareString("一番カジュアルなAndroid用 新聞アプリ\n http://goo.gl/c0j2H #無駄新聞", "紹介");
 	}
-	
-	private void gotoMarket() {
-		Intent intent = new Intent(
-				android.content.Intent.ACTION_VIEW,
-				Uri.parse("market://details?id=com.starbug1.android.mudanews"));
-	    startActivity(Intent.createChooser(intent, "紹介"));
-	}
-	
+		
 	private void settings() {
 		Intent intent = new Intent(this, AppPrefActivity.class);
 		startActivity(intent);
