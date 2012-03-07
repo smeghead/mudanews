@@ -230,7 +230,10 @@ public class MudanewsActivity extends Activity {
 						String processName = MudanewsActivity.this.getResources().getStringArray(R.array.arrays_entry_action_values)[which];
 						final SQLiteDatabase db = dbHelper_.getWritableDatabase();
 						try {
-							if ("make_favorite".equals(processName)) {
+							if ("share".equals(processName)) {
+								//共有
+								parappa_.shareString(item.getTitle() + " " + item.getLink() + " #無駄新聞", "共有");
+							} else if ("make_favorite".equals(processName)) {
 								//お気に入り
 								db.execSQL(
 										"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
@@ -367,11 +370,13 @@ public class MudanewsActivity extends Activity {
 	public boolean onMenuOpened(int featureId, Menu menu) {
 		if (isViewingEntry_) {
 			menu.findItem(R.id.menu_update_feeds).setVisible(false);
+			menu.findItem(R.id.menu_reload).setVisible(true);
 			menu.findItem(R.id.menu_share).setVisible(true);
 			menu.findItem(R.id.menu_settings).setVisible(false);
 			menu.findItem(R.id.menu_favorite).setVisible(true);
 		} else {
 			menu.findItem(R.id.menu_share).setVisible(false);
+			menu.findItem(R.id.menu_reload).setVisible(false);
 			menu.findItem(R.id.menu_update_feeds).setVisible(true);
 			menu.findItem(R.id.menu_settings).setVisible(true);
 			menu.findItem(R.id.menu_favorite).setVisible(false);
@@ -384,6 +389,11 @@ public class MudanewsActivity extends Activity {
 		switch (item.getItemId()) {
 		case R.id.menu_update_feeds:
 			fetchFeeds();
+			break;
+		case R.id.menu_reload:
+			WebView entryView = (WebView) MudanewsActivity.this
+			.findViewById(R.id.entryView);
+			entryView.reload();
 			break;
 		case R.id.menu_settings:
 			settings();
