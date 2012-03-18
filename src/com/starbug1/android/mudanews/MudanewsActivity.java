@@ -232,7 +232,7 @@ public class MudanewsActivity extends Activity {
 						try {
 							if ("share".equals(processName)) {
 								//共有
-								parappa_.shareString(item.getTitle() + " " + item.getLink() + " #無駄新聞", "共有");
+								parappa_.shareString(item.getTitle() + " " + item.getLink() + " #" + getResources().getString(R.string.app_name), "共有");
 							} else if ("make_favorite".equals(processName)) {
 								//お気に入り
 								db.execSQL(
@@ -309,7 +309,6 @@ public class MudanewsActivity extends Activity {
 
 			public void onScroll(AbsListView view, int firstVisibleItem,
 					int visibleItemCount, int totalItemCount) {
-				Log.d("MudanewsActivity", "onScrollState");
 				stayBottom = (totalItemCount == firstVisibleItem
 						+ visibleItemCount);
 			}
@@ -441,11 +440,11 @@ public class MudanewsActivity extends Activity {
 		if (currentItem_ == null) {
 			return;
 		}
-		parappa_.shareString(currentItem_.getTitle() + " " + currentItem_.getLink() + " #無駄新聞", "共有");
+		parappa_.shareString(currentItem_.getTitle() + " " + currentItem_.getLink() + " #" + getResources().getString(R.string.app_name), "共有");
 	}
 	
 	private void shareAll() {
-		parappa_.shareString("一番カジュアルなAndroid用 新聞アプリ\n http://goo.gl/c0j2H #無駄新聞", "紹介");
+		parappa_.shareString(getResources().getString(R.string.shareDescription) + " #" + getResources().getString(R.string.app_name), "紹介");
 	}
 		
 	private void settings() {

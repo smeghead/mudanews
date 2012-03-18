@@ -82,7 +82,7 @@ public class FetchFeedService extends Service {
 		Log.d("FetchFeedService", "onCreate");
 		
 		sharedPreferences_ = PreferenceManager.getDefaultSharedPreferences(this);
-		int clowlIntervals = Integer.parseInt(sharedPreferences_.getString("clowl_intervals", "15"));
+		int clowlIntervals = Integer.parseInt(sharedPreferences_.getString("clowl_intervals", "60"));
 		if (clowlIntervals != 0) {
 			AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
 			Intent alarmIntent = new Intent(this, AlarmReceiver.class);
@@ -113,6 +113,13 @@ public class FetchFeedService extends Service {
 	private void fetchFeeds() {
 		if (isRunning) return;
 		
+		boolean nightClowl = sharedPreferences_.getBoolean("pref_night_clowl", false);
+		int hour = new Date().getHours();
+		if (!nightClowl && (hour < 8 || hour > 22)) {
+			Log.d("FetchFeedService", "this is night. zzz");
+			return;
+		}
+
 		if (!isRunning) {
 			try {
 				isRunning = true;
@@ -132,7 +139,7 @@ public class FetchFeedService extends Service {
 							MudanewsActivity.class);
 					PendingIntent contentIntent = PendingIntent.getActivity(
 							FetchFeedService.this, 0, intent, 0);
-					notification.setLatestEventInfo(getApplicationContext(), "無駄新聞",
+					notification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name),
 							String.valueOf(count) + "件の新着記事を追加しました", contentIntent);
 					manager.notify(R.string.app_name, notification);
 				}
@@ -257,6 +264,9 @@ public class FetchFeedService extends Service {
 							} else if (tag.equals("date")) {
 								String dateExp = parser.nextText();
 								currentItem.setPublishedAt(parseDate(dateExp));
+							} else if (tag.equals("pubDate")) {
+								String dateExp = parser.nextText();
+								currentItem.setPublishedAt(parseDate(dateExp));
 							}
 						}
 						break;
@@ -288,7 +298,7 @@ public class FetchFeedService extends Service {
 	}
 	
 	private String pickupUrl(String src) {
-		Pattern p = Pattern.compile("<img.*src=\"([^\"]*)\"");
+		Pattern p = Pattern.compile("<img.*src=\"([^\"]*)\"", Pattern.DOTALL);
 		Matcher m = p.matcher(src);
 		if (!m.find()) {
 			return "";
@@ -308,7 +318,7 @@ public class FetchFeedService extends Service {
 			return d.getTime();
 		}
 		try {
-			SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z");
+			SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
 			d = format.parse(src);
 		} catch (Exception e) {
 			Log.e("FetchFeedService", e.getMessage());
@@ -319,24 +329,26 @@ public class FetchFeedService extends Service {
 		return 0;
 	}
 
+	private Pattern imageUrl_ = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
+	private Pattern gigagineContent_ = Pattern.compile("class=\"preface\"(.*)$", Pattern.DOTALL);
 	private NewsListItem fetchImage(NewsListItem item) {
 			String imageUrl = item.getImageUrl();
 			if (imageUrl == null || imageUrl.length() == 0) {
 				try {
 					//GIGAZINE はfeedにimageのURLが無いので直に取得しにいく。
 					String content = FileDownloader.download(item.getLink());
-					Pattern p = Pattern.compile("class=\"preface\"(.*)$", Pattern.DOTALL);
-					Matcher m = p.matcher(content);
-					if (!m.find()) {
-						return item;
+					if (item.getSource().equals("GIGAZINE")) {
+						Matcher m = gigagineContent_.matcher(content);
+						if (!m.find()) {
+							return item;
+						}
+						String mainPart = m.group(1);
+						m = imageUrl_.matcher(mainPart);
+						if (!m.find()) {
+							return item;
+						}
+						imageUrl = m.group(1);
 					}
-					String mainPart = m.group(1);
-					p = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
-					m = p.matcher(mainPart);
-					if (!m.find()) {
-						return item;
-					}
-					imageUrl = m.group(1);
 				} catch (AppException e) {
 					Log.e("FetchFeedService", "failed to download content.");
 					return item;
