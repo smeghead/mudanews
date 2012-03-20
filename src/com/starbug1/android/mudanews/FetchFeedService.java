@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -50,6 +51,7 @@ import android.util.Xml;
 import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
 import com.starbug1.android.mudanews.utils.FileDownloader;
+import com.starbug1.android.mudanews.utils.FlushedInputStream;
 import com.starbug1.android.mudanews.utils.InternetStatus;
 
 /**
@@ -359,7 +361,7 @@ public class FetchFeedService extends Service {
 			try {
 				url = new URL(imageUrl);
 				is = url.openConnection().getInputStream();
-				Bitmap image = BitmapFactory.decodeStream(is);
+				Bitmap image = BitmapFactory.decodeStream(new FlushedInputStream(is));
 				
 				int heightOrg = image.getHeight(), widthOrg = image.getWidth();
 				int height = 0, width = 0;
