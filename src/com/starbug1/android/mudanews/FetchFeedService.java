@@ -117,7 +117,7 @@ public class FetchFeedService extends Service {
 		
 		boolean nightClowl = sharedPreferences_.getBoolean("pref_night_clowl", false);
 		int hour = new Date().getHours();
-		if (!nightClowl && (hour < 8 || hour > 22)) {
+		if (!nightClowl && hour < 7) {
 			Log.d("FetchFeedService", "this is night. zzz");
 			return;
 		}
@@ -300,7 +300,7 @@ public class FetchFeedService extends Service {
 	}
 	
 	private String pickupUrl(String src) {
-		Pattern p = Pattern.compile("<img.*src=\"([^\"]*)\"", Pattern.DOTALL);
+		Pattern p = Pattern.compile("<img.*src=\"([^\"]*)\"", Pattern.MULTILINE);
 		Matcher m = p.matcher(src);
 		if (!m.find()) {
 			return "";
