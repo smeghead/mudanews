@@ -6,6 +6,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import me.parappa.sdk.PaRappa;
+import me.parappa.sdk.util.MetaDataUtil;
+import mediba.ad.sdk.android.openx.MasAdListener;
+import mediba.ad.sdk.android.openx.MasAdView;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -63,7 +66,8 @@ public class MudanewsActivity extends Activity {
 	private ProgressDialog progressDialog_;
 	private DatabaseHelper dbHelper_ = null;
 	private NewsListItem currentItem_ = null;
-	 private PaRappa parappa_;
+	private PaRappa parappa_;
+	private MasAdView mad_, mad2_;
 
 	private void setupAnim() {
 		anim_left_in_ = AnimationUtils.loadAnimation(MudanewsActivity.this,
@@ -113,7 +117,7 @@ public class MudanewsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		Log.d("MudanewsActivity", "setContentView");
-		
+
 		dbHelper_ = new DatabaseHelper(MudanewsActivity.this);
 		setupAnim();
 		flipper_ = (ViewFlipper) this.findViewById(R.id.flipper);
@@ -157,7 +161,7 @@ public class MudanewsActivity extends Activity {
 
 				WebView entryView = (WebView) MudanewsActivity.this
 						.findViewById(R.id.entryView);
-				
+
 				entryView.setWebViewClient(new WebViewClient() {
 
 					@Override
@@ -187,7 +191,9 @@ public class MudanewsActivity extends Activity {
 					@Override
 					public boolean shouldOverrideUrlLoading(WebView view,
 							String url) {
-						if (!url.startsWith("file") && !UrlUtils.isSameDomain(view.getOriginalUrl(), url)) {
+						if (!url.startsWith("file")
+								&& !UrlUtils.isSameDomain(
+										view.getOriginalUrl(), url)) {
 							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
 									.parse(url));
 							startActivity(intent);
@@ -204,7 +210,7 @@ public class MudanewsActivity extends Activity {
 				ws.setPluginsEnabled(true);
 				ws.setUseWideViewPort(true);
 				ws.setJavaScriptEnabled(true);
-				ws.setAppCacheMaxSize(1024 * 1024 * 64); //64MB
+				ws.setAppCacheMaxSize(1024 * 1024 * 64); // 64MB
 				ws.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
 				ws.setDomStorageEnabled(true);
 				ws.setAppCacheEnabled(true);
@@ -216,60 +222,89 @@ public class MudanewsActivity extends Activity {
 			}
 		});
 		grid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-			
+
 			public boolean onItemLongClick(AdapterView<?> arg0, View viewArg,
 					int position, long arg3) {
 				final View v = viewArg;
 				final NewsListItem item = items_.get(position);
-//			    Integer item_index = (Integer)v.getTag() - 1;
-				AlertDialog.Builder ad = new AlertDialog.Builder(MudanewsActivity.this);
+				// Integer item_index = (Integer)v.getTag() - 1;
+				AlertDialog.Builder ad = new AlertDialog.Builder(
+						MudanewsActivity.this);
 				ad.setTitle("記事のアクション");
-				ad.setItems(R.array.arrays_entry_actions, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						Log.d("NewsListAdapter", "longclickmenu selected id:" + item.getId());
-						String processName = MudanewsActivity.this.getResources().getStringArray(R.array.arrays_entry_action_values)[which];
-						final SQLiteDatabase db = dbHelper_.getWritableDatabase();
-						try {
-							if ("share".equals(processName)) {
-								//共有
-								parappa_.shareString(item.getTitle() + " " + item.getLink() + " #" + getResources().getString(R.string.app_name), "共有");
-							} else if ("make_favorite".equals(processName)) {
-								//お気に入り
-								db.execSQL(
-										"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
-										new String[] { String.valueOf(item.getId()) });
-								item.setFavorite(true);
-								ImageView favorite = (ImageView) v
-										.findViewById(R.id.favorite);
-								favorite.setImageResource(android.R.drawable.btn_star_big_on);
-								Toast.makeText(MudanewsActivity.this, item.getTitle() + "をお気に入りにしました", Toast.LENGTH_LONG).show();
-							} else if ("make_read".equals(processName)) {
-								//既読にする
-								db.execSQL(
-										"insert into view_logs (feed_id, created_at) values (?, current_timestamp)",
-										new String[] { String.valueOf(item.getId()) });
-								item.setViewCount(item.getViewCount() + 1);
-								ImageView newIcon = (ImageView) v
-										.findViewById(R.id.newEntry);
-								newIcon.setVisibility(ImageView.GONE);
-								Toast.makeText(MudanewsActivity.this, item.getTitle() + "を既読にしました", Toast.LENGTH_LONG).show();
-							} else if ("delete".equals(processName)) {
-								//削除
-								db.execSQL(
-										"update feeds set deleted = 1 where id = ?",
-										new String[] { String.valueOf(item.getId()) });
-								items_.remove(item);
-								page_ = 0;
-								Toast.makeText(MudanewsActivity.this, item.getTitle() + "を削除しました", Toast.LENGTH_LONG).show();
-								updateList(page_);
+				ad.setItems(R.array.arrays_entry_actions,
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								Log.d("NewsListAdapter",
+										"longclickmenu selected id:"
+												+ item.getId());
+								String processName = MudanewsActivity.this
+										.getResources()
+										.getStringArray(
+												R.array.arrays_entry_action_values)[which];
+								final SQLiteDatabase db = dbHelper_
+										.getWritableDatabase();
+								try {
+									if ("share".equals(processName)) {
+										// 共有
+										parappa_.shareString(
+												item.getTitle()
+														+ " "
+														+ item.getLink()
+														+ " #"
+														+ getResources()
+																.getString(
+																		R.string.app_name),
+												"共有");
+									} else if ("make_favorite"
+											.equals(processName)) {
+										// お気に入り
+										db.execSQL(
+												"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
+												new String[] { String
+														.valueOf(item.getId()) });
+										item.setFavorite(true);
+										ImageView favorite = (ImageView) v
+												.findViewById(R.id.favorite);
+										favorite.setImageResource(android.R.drawable.btn_star_big_on);
+										Toast.makeText(
+												MudanewsActivity.this,
+												item.getTitle() + "をお気に入りにしました",
+												Toast.LENGTH_LONG).show();
+									} else if ("make_read".equals(processName)) {
+										// 既読にする
+										db.execSQL(
+												"insert into view_logs (feed_id, created_at) values (?, current_timestamp)",
+												new String[] { String
+														.valueOf(item.getId()) });
+										item.setViewCount(item.getViewCount() + 1);
+										ImageView newIcon = (ImageView) v
+												.findViewById(R.id.newEntry);
+										newIcon.setVisibility(ImageView.GONE);
+										Toast.makeText(MudanewsActivity.this,
+												item.getTitle() + "を既読にしました",
+												Toast.LENGTH_LONG).show();
+									} else if ("delete".equals(processName)) {
+										// 削除
+										db.execSQL(
+												"update feeds set deleted = 1 where id = ?",
+												new String[] { String
+														.valueOf(item.getId()) });
+										items_.remove(item);
+										page_ = 0;
+										Toast.makeText(MudanewsActivity.this,
+												item.getTitle() + "を削除しました",
+												Toast.LENGTH_LONG).show();
+										updateList(page_);
+									}
+								} catch (Exception e) {
+									Log.e("MudanewsActivity",
+											"failed to upate entry action.");
+								} finally {
+									db.close();
+								}
 							}
-						} catch (Exception e) {
-							Log.e("MudanewsActivity", "failed to upate entry action.");
-						} finally {
-							db.close();
-						}
-					}
-				});
+						});
 				AlertDialog alert = ad.create();
 				alert.show();
 				return true;
@@ -317,7 +352,8 @@ public class MudanewsActivity extends Activity {
 
 		// 初回起動なら、feed取得 ボタンを表示する
 		if (dbHelper_.entryIsEmpty()) {
-			final Button fetchfeeds = (Button) this.findViewById(R.id.fetchfeeds);
+			final Button fetchfeeds = (Button) this
+					.findViewById(R.id.fetchfeeds);
 			fetchfeeds.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					fetchFeeds();
@@ -335,11 +371,27 @@ public class MudanewsActivity extends Activity {
 		NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		manager.cancelAll();
 		parappa_ = new PaRappa(this);
+
+		mad_ = (MasAdView) findViewById(R.id.adview);
+
+		String medibaAdId = MetaDataUtil.getMetaData(
+				this.getApplicationContext(), "MEDIBAAD_ID", "id:").substring(
+				"id:".length());
+		Log.d("MudanewsActivity", "MEDIBAAD_ID" + medibaAdId);
+		mad_.setAuid(medibaAdId);
+		mad_.setAdListener(new AdListener());
+		mad_.start();
+		mad2_ = (MasAdView) findViewById(R.id.adview2);
+		mad2_.setAuid(medibaAdId);
+		mad2_.setAdListener(new AdListener());
+		mad2_.start();
+
 	}
 
 	private NewsParserTask task_ = null;
 
 	public int column_count_ = 1;
+
 	private void setupGridColumns() {
 		WindowManager w = getWindowManager();
 		Display d = w.getDefaultDisplay();
@@ -359,7 +411,7 @@ public class MudanewsActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		
+
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.mainmenu, menu);
 		return true;
@@ -391,7 +443,7 @@ public class MudanewsActivity extends Activity {
 			break;
 		case R.id.menu_reload:
 			WebView entryView = (WebView) MudanewsActivity.this
-			.findViewById(R.id.entryView);
+					.findViewById(R.id.entryView);
 			entryView.reload();
 			break;
 		case R.id.menu_settings:
@@ -417,9 +469,10 @@ public class MudanewsActivity extends Activity {
 	}
 
 	private void favorite() {
-		if (currentItem_ == null) return;
+		if (currentItem_ == null)
+			return;
 		Log.d("MudanewsActivity", "favorite id:" + currentItem_.getId());
-		
+
 		final SQLiteDatabase db = dbHelper_.getWritableDatabase();
 		try {
 			// お気に入り
@@ -427,7 +480,9 @@ public class MudanewsActivity extends Activity {
 					"insert into favorites (feed_id, created_at) values (?, current_timestamp)",
 					new String[] { String.valueOf(currentItem_.getId()) });
 			currentItem_.setFavorite(true);
-			Toast.makeText(MudanewsActivity.this, currentItem_.getTitle() + "をお気に入りにしました", Toast.LENGTH_LONG).show();
+			Toast.makeText(MudanewsActivity.this,
+					currentItem_.getTitle() + "をお気に入りにしました", Toast.LENGTH_LONG)
+					.show();
 		} catch (Exception e) {
 			Log.e("MudanewsActivity", "failed to favorite.");
 		} finally {
@@ -435,18 +490,23 @@ public class MudanewsActivity extends Activity {
 				db.close();
 		}
 	}
-	
+
 	private void share() {
 		if (currentItem_ == null) {
 			return;
 		}
-		parappa_.shareString(currentItem_.getTitle() + " " + currentItem_.getLink() + " #" + getResources().getString(R.string.app_name), "共有");
+		parappa_.shareString(
+				currentItem_.getTitle() + " " + currentItem_.getLink() + " #"
+						+ getResources().getString(R.string.app_name), "共有");
 	}
-	
+
 	private void shareAll() {
-		parappa_.shareString(getResources().getString(R.string.shareDescription) + " #" + getResources().getString(R.string.app_name), "紹介");
+		parappa_.shareString(getResources()
+				.getString(R.string.shareDescription)
+				+ " #"
+				+ getResources().getString(R.string.app_name), "紹介");
 	}
-		
+
 	private void settings() {
 		Intent intent = new Intent(this, AppPrefActivity.class);
 		startActivity(intent);
@@ -468,9 +528,12 @@ public class MudanewsActivity extends Activity {
 						items_.clear();
 						updateList(page_);
 						if (count == 0) {
-							Toast.makeText(MudanewsActivity.this, "新しい記事はありませんでした", Toast.LENGTH_LONG).show();
+							Toast.makeText(MudanewsActivity.this,
+									"新しい記事はありませんでした", Toast.LENGTH_LONG).show();
 						} else {
-							Toast.makeText(MudanewsActivity.this, count + "件の記事を追加しました", Toast.LENGTH_LONG).show();
+							Toast.makeText(MudanewsActivity.this,
+									count + "件の記事を追加しました", Toast.LENGTH_LONG)
+									.show();
 						}
 					}
 				});
@@ -492,6 +555,12 @@ public class MudanewsActivity extends Activity {
 	protected void onPause() {
 		if (task_ != null) {
 			task_.progresCancel();
+		}
+		if (mad_ != null) {
+			mad_.stop();
+		}
+		if (mad2_ != null) {
+			mad2_.stop();
 		}
 		super.onPause();
 	}
@@ -524,5 +593,38 @@ public class MudanewsActivity extends Activity {
 
 	public DatabaseHelper getDbHelper() {
 		return dbHelper_;
+	}
+
+	@Override
+	protected void onResume() {
+		if (mad_ != null) {
+			mad_.start();
+		}
+		if (mad2_ != null) {
+			mad2_.start();
+		}
+		super.onResume();
+	}
+
+	private class AdListener extends MasAdListener {
+		@Override
+		public void onReceiveAd() {
+			Log.v("AdDemo", "onReceiveAd");
+		}
+
+		@Override
+		public void onFailedToReceiveAd() {
+			Log.v("AdDemo", " onFailedToReceiveAd ");
+		}
+
+		@Override
+		public void onReceiveRefreshedAd() {
+			Log.v("AdDemo", " onReceiveRefreshedAd ");
+		}
+
+		@Override
+		public void onFailedToReceiveRefreshedAd() {
+			Log.v("AdDemo", " o onFailedToReceiveRefreshedAd ");
+		}
 	}
 }

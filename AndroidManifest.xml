@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.starbug1.android.mudanews"
-        android:versionCode="132" android:versionName="1.3.2">
+        android:versionCode="133" android:versionName="1.3.3">
     <uses-sdk android:minSdkVersion="7"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -28,9 +28,11 @@
         </receiver>
         <service android:enabled="true" android:name="com.starbug1.android.mudanews.FetchFeedService" />
         <activity android:name="com.starbug1.android.mudanews.NewsDetailActivity"></activity>
+<!-- 
         <activity
                 android:name="com.google.ads.AdActivity" 
                 android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+-->
         <!-- PaRappa Support Activity -->
         <activity
             android:name="me.parappa.sdk.activity.SupportActivity"
@@ -53,7 +55,10 @@
             </intent-filter>
         </receiver>
         <!-- PaRappa Application Code Setting -->
-        <meta-data android:name="PARAPPA_APP_CODE" android:value="pLvsV7y2"/>
+        <meta-data android:name="PARAPPA_APP_CODE" android:value="pLvsV7y2" />
+        
+        <!-- Mediba ad -->
+        <meta-data android:name="MEDIBAAD_ID" android:value="id:169143" />
     </application>
     
     <meta-data android:name="ADMOB_PUBLISHER_ID" android:value="a14edaf2bb22e23"/>

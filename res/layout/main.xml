@@ -28,11 +28,23 @@
 					android:layout_alignParentTop="true" android:background="#ffffffff" android:padding="0dp">
 			</GridView>
 			<RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/relativeLayout1" android:layout_gravity="bottom">
+			     <RelativeLayout
+				    android:id="@+id/adcontainer"
+				    android:layout_width="fill_parent"
+				    android:layout_height="wrap_content"
+				    android:layout_alignParentBottom="false" >
+				        <mediba.ad.sdk.android.openx.MasAdView
+				        android:id="@+id/adview"
+				        android:layout_width="fill_parent"
+				        android:layout_height="wrap_content"/>
+				</RelativeLayout>
+<!-- 			    
 				<com.google.ads.AdView android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/adView"
 						ads:adUnitId="a14edaf2bb22e23"
 						ads:adSize="BANNER"
 						ads:loadAdOnCreate="true">
 				</com.google.ads.AdView>
+ -->
 				<Button android:id="@+id/more" android:layout_height="wrap_content" android:text=" もっと表示する" android:layout_width="fill_parent" android:visibility="gone"></Button>
 			</RelativeLayout>
 		</LinearLayout>
@@ -60,11 +72,23 @@
 					android:id="@+id/entryView">
 			</WebView>
 			<RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/relativeLayout2" android:layout_gravity="bottom">
+                 <RelativeLayout
+                    android:id="@+id/adcontainer2"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="false" >
+                        <mediba.ad.sdk.android.openx.MasAdView
+                        android:id="@+id/adview2"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"/>
+                </RelativeLayout>
+<!--                
 				<com.google.ads.AdView android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/adView2"
 						ads:adUnitId="a14edaf2bb22e23"
 						ads:adSize="BANNER"
 						ads:loadAdOnCreate="true">
 				</com.google.ads.AdView>
+-->
 			</RelativeLayout>
 		</LinearLayout>
 	</LinearLayout>
