@@ -36,6 +36,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SyncResult;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -333,7 +334,8 @@ public class FetchFeedService extends Service {
 
 	private Pattern imageUrl_ = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
 	private Pattern gigagineContent_ = Pattern.compile("class=\"preface\"(.*)$", Pattern.DOTALL);
-	private NewsListItem fetchImage(NewsListItem item) {
+	
+	synchronized private NewsListItem fetchImage(NewsListItem item) { //OutOfMemory 対策として同期化した。
 			String imageUrl = item.getImageUrl();
 			if (imageUrl == null || imageUrl.length() == 0) {
 				try {

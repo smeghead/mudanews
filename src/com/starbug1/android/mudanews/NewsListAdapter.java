@@ -46,7 +46,6 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			view = inflater_.inflate(R.layout.item_row, null);
 		}
 
-		Log.d("NewsListAdapter", "position: " + position);
 		if (this.getCount() < position + 1) {
 			Log.w("NewsListAdapter", "position invalid!");
 			return null;
@@ -96,12 +95,10 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 			});
 			GridView grid = (GridView) context_.findViewById(R.id.grid);
 			int size = grid.getWidth() / context_.column_count_;
-			Log.d("NewsListAdapter", "size:" + size);
 			if (item.getImage() != null) {
 				Bitmap bOrg = item.getImageBitmap();
 				if (bOrg == null) {
 					byte[] data = item.getImage();
-					Log.d("NewsListAdapter", "data.length:" + data.length);
 					try {
 						bOrg = BitmapFactory.decodeByteArray(data, 0, data.length);
 					} catch (OutOfMemoryError e) {
