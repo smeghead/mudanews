@@ -25,11 +25,9 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 	private final int MAX_ENTRIES_PER_PAGE = 30;
 	private final MudanewsActivity activity_;
 	private final NewsListAdapter adapter_;
-//	private ProgressDialog progresDialog_;
 	private int page_;
 
 	public NewsParserTask(MudanewsActivity activity, NewsListAdapter adapter) {
-		activity.gridUpdating = true;
 		activity_ = activity;
 		adapter_ = adapter;
 		activity_.gridUpdating = true;
@@ -37,9 +35,6 @@ public class NewsParserTask extends AsyncTask<String, Integer, List<NewsListItem
 	
 	@Override
 	protected void onPreExecute() {
-//		progresDialog_ = new ProgressDialog(activity_);
-//		progresDialog_.setMessage("読み込み中...");
-//		progresDialog_.show();
 	}
 	
 	/* (non-Javadoc)

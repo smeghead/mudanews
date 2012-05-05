@@ -202,6 +202,14 @@ public class MudanewsActivity extends Activity {
 						return super.shouldOverrideUrlLoading(view, url);
 					}
 				});
+				ImageView share = (ImageView)findViewById(R.id.image_share);
+				share.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						parappa_.shareString(currentItem_.getTitle() + " " + currentItem_.getLink() + " #" + getResources().getString(R.string.app_name), "共有");
+					}
+				});
+				
 				WebSettings ws = entryView.getSettings();
 				ws.setBuiltInZoomControls(true);
 				ws.setLoadWithOverviewMode(true);
