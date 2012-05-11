@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.starbug1.android.mudanews"
-        android:versionCode="141" android:versionName="1.4.1">
+        android:versionCode="150" android:versionName="1.5.0">
     <uses-sdk android:minSdkVersion="7"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -14,6 +14,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".EntryActivity"
+                android:label="@string/app_name"
+                android:configChanges="orientation|keyboardHidden">
         </activity>
         <activity
             android:label="@string/app_name"
