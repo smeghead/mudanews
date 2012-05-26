@@ -3,6 +3,7 @@
  */
 package com.starbug1.android.mudanews;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
@@ -11,8 +12,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -30,11 +33,11 @@ import com.starbug1.android.mudanews.data.NewsListItem;
 public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 	private LayoutInflater inflater_;
 	private TextView title_;
-	private MudanewsActivity context_;
+	private AbstractActivity context_;
 
-	public NewsListAdapter(Context context, List<NewsListItem> objects) {
-		super(context, 0, objects);
-		context_ = (MudanewsActivity)context;
+	public NewsListAdapter(Context context) {
+		super(context, 0, new ArrayList<NewsListItem>());
+		context_ = (AbstractActivity)context;
 		inflater_ = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
@@ -95,8 +98,10 @@ public class NewsListAdapter extends ArrayAdapter<NewsListItem> {
 					}
 				}
 			});
-			GridView grid = (GridView) context_.findViewById(R.id.grid);
-			int size = grid.getWidth() / context_.column_count_;
+			WindowManager w = context_.getWindowManager();
+			Display d = w.getDefaultDisplay();
+
+			int size = d.getWidth() / context_.getGridColumnCount();
 			if (item.getImage() != null) {
 				Bitmap bOrg = item.getImageBitmap();
 				if (bOrg == null) {

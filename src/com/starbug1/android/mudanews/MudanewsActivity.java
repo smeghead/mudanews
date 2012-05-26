@@ -39,14 +39,14 @@ import com.starbug1.android.mudanews.data.DatabaseHelper;
 import com.starbug1.android.mudanews.data.NewsListItem;
 import com.starbug1.android.mudanews.utils.AppUtils;
 
-public class MudanewsActivity extends Activity {
+public class MudanewsActivity extends AbstractActivity {
 	private static final String TAG = "MudanewsActivity";
 	
 	private List<NewsListItem> items_;
-	private NewsListAdapter adapter_;
 	private int page_ = 0;
 	private ProgressDialog progressDialog_;
 	private DatabaseHelper dbHelper_ = null;
+	private NewsListAdapter adapter_;
 	public boolean hasNextPage = true;
 	public boolean gridUpdating = false;
 	private PaRappa parappa_;
@@ -95,7 +95,7 @@ public class MudanewsActivity extends Activity {
 
 		page_ = 0; hasNextPage = true;
 		items_ = new ArrayList<NewsListItem>();
-		adapter_ = new NewsListAdapter(this, items_);
+		adapter_ = new NewsListAdapter(this);
 
 		String versionName = AppUtils.getVersionName(this);
 		TextView version = (TextView) this.findViewById(R.id.version);
@@ -250,9 +250,9 @@ public class MudanewsActivity extends Activity {
 		parappa_ = new PaRappa(this);
 	}
 
-	private NewsParserTask task_ = null;
+	private NewsCollectTask task_ = null;
 
-	public int column_count_ = 1;
+	private int column_count_ = 1;
 	private void setupGridColumns() {
 		WindowManager w = getWindowManager();
 		Display d = w.getDefaultDisplay();
@@ -265,7 +265,8 @@ public class MudanewsActivity extends Activity {
 	private void updateList(int page) {
 		setupGridColumns();
 
-		task_ = new NewsParserTask(this, adapter_);
+		GridView grid = (GridView) this.findViewById(R.id.grid);
+		task_ = new NewsCollectTask(this, grid, adapter_);
 		task_.execute(String.valueOf(page));
 	}
 
@@ -300,6 +301,10 @@ public class MudanewsActivity extends Activity {
 			break;
 		case R.id.menu_support:
 			parappa_.startSupportActivity();
+			break;
+		case R.id.menu_favorites:
+			Intent intent = new Intent(this, FavoriteListActivity.class);
+			this.startActivity(intent);
 			break;
 		}
 		return super.onOptionsItemSelected(item);
@@ -369,5 +374,10 @@ public class MudanewsActivity extends Activity {
 
 	public DatabaseHelper getDbHelper() {
 		return dbHelper_;
+	}
+
+	@Override
+	public int getGridColumnCount() {
+		return this.column_count_;
 	}
 }
