@@ -27,10 +27,10 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.starbug1.android.mudanews.R;
 import com.starbug1.android.newsapp.data.DatabaseHelper;
 import com.starbug1.android.newsapp.data.NewsListItem;
 import com.starbug1.android.newsapp.utils.AppUtils;
+import com.starbug1.android.newsapp.utils.ResourceProxy.R;
 
 public class MainActivity extends AbstractActivity {
 	private static final String TAG = "MudanewsActivity";
@@ -76,6 +76,7 @@ public class MainActivity extends AbstractActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.d(TAG, "onCreate");
+		R.init(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		Log.d(TAG, "setContentView");
@@ -206,26 +207,19 @@ public class MainActivity extends AbstractActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_update_feeds:
+		if (item.getItemId() == R.id.menu_update_feeds) {
 			fetchFeeds(false);
-			break;
-		case R.id.menu_settings:
+		} else if (item.getItemId() == R.id.menu_settings) {
 			settings();
-			break;
-		case R.id.menu_notify_all:
+		} else if (item.getItemId() == R.id.menu_notify_all) {
 			shareAll();
-			break;
-		case R.id.menu_review:
+		} else if (item.getItemId() == R.id.menu_review) {
 			parappa_.gotoMarket();
-			break;
-		case R.id.menu_support:
+		} else if (item.getItemId() == R.id.menu_support) {
 			parappa_.startSupportActivity();
-			break;
-		case R.id.menu_favorites:
+		} else if (item.getItemId() == R.id.menu_favorites) {
 			Intent intent = new Intent(this, FavoriteListActivity.class);
 			this.startActivity(intent);
-			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}

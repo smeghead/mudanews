@@ -5,14 +5,10 @@ import java.util.TimerTask;
 
 import me.parappa.sdk.PaRappa;
 
-import com.starbug1.android.mudanews.R;
-import com.starbug1.android.mudanews.R.id;
-import com.starbug1.android.mudanews.R.layout;
-import com.starbug1.android.mudanews.R.menu;
-import com.starbug1.android.mudanews.R.string;
 import com.starbug1.android.newsapp.data.DatabaseHelper;
 import com.starbug1.android.newsapp.data.NewsListItem;
 import com.starbug1.android.newsapp.utils.AppUtils;
+import com.starbug1.android.newsapp.utils.ResourceProxy.R;
 import com.starbug1.android.newsapp.utils.UrlUtils;
 
 import android.app.Activity;
@@ -48,6 +44,7 @@ public class EntryActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		R.init(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.entry);
 
@@ -123,7 +120,11 @@ public class EntryActivity extends Activity {
 		ws.setDomStorageEnabled(true);
 		ws.setAppCacheEnabled(true);
 		webview_.setVerticalScrollbarOverlay(true);
-		webview_.loadUrl(UrlUtils.mobileUrl(currentItem_.getLink()));
+		webview_.loadUrl(
+				UrlUtils.mobileUrl(
+						currentItem_.getLink(), 
+						this.getResources().getStringArray(R.array.arrays_mobile_url_orgin), 
+						this.getResources().getStringArray(R.array.arrays_mobile_url_repleace)));
 		progressDialog_ = new ProgressDialog(this);
 		progressDialog_.setMessage("読み込み中...");
 		progressDialog_.show();
@@ -148,27 +149,20 @@ public class EntryActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_reload:
+		if (item.getItemId() == R.id.menu_reload) {
 			WebView entryView = (WebView) this
 			.findViewById(R.id.entryView);
 			entryView.reload();
-			break;
-		case R.id.menu_share:
+		} else if (item.getItemId() == R.id.menu_share) {
 			share();
-			break;
-		case R.id.menu_notify_all:
+		} else if (item.getItemId() == R.id.menu_notify_all) {
 			shareAll();
-			break;
-		case R.id.menu_review:
+		} else if (item.getItemId() == R.id.menu_review) {
 			parappa_.gotoMarket();
-			break;
-		case R.id.menu_favorite:
+		} else if (item.getItemId() == R.id.menu_favorite) {
 			favorite();
-			break;
-		case R.id.menu_support:
+		} else if (item.getItemId() == R.id.menu_support) {
 			parappa_.startSupportActivity();
-			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}

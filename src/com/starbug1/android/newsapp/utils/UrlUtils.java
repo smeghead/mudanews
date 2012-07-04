@@ -4,10 +4,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UrlUtils {
-	public static String mobileUrl(String url) {
+	public static String mobileUrl(String url, String[] origins, String[] replaces) {
 		String ret = url;
-		ret = ret.replaceAll("/dqnplus/", "/dqnplus/lite/");
-		ret = ret.replaceAll("/labaq.com/", "/labaq.com/lite/");
+		for (int i = 0; i < origins.length; i++) {
+			ret = ret.replaceAll(origins[i], replaces[i]);
+		}
 		return ret;
 	}
 
@@ -22,5 +23,14 @@ public class UrlUtils {
 	
 	public static boolean isSameDomain(String originalUrl, String url) {
 		return findDomain(originalUrl).equals(findDomain(url));
+	}
+
+	private static Pattern schemaDomainPattern_ = Pattern.compile("(https?://[^/]*)");
+	public static String findSchemaDomain(String url) {
+		Matcher m = schemaDomainPattern_.matcher(url);
+		if (!m.find()) {
+			return "";
+		}
+		return m.group(1);
 	}
 }

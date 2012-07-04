@@ -11,11 +11,9 @@ import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.starbug1.android.mudanews.R;
-import com.starbug1.android.mudanews.R.id;
-import com.starbug1.android.mudanews.R.layout;
 import com.starbug1.android.newsapp.data.DatabaseHelper;
 import com.starbug1.android.newsapp.utils.AppUtils;
+import com.starbug1.android.newsapp.utils.ResourceProxy.R;
 
 public class FavoriteListActivity extends AbstractActivity {
 	final Handler handler_ = new Handler();
@@ -24,6 +22,7 @@ public class FavoriteListActivity extends AbstractActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		R.init(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.favorite_list);
 		

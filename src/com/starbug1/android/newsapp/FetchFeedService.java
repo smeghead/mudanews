@@ -72,7 +72,7 @@ public abstract class FetchFeedService extends Service {
 			this.name = name;
 			this.url = url;
 		}
-		public abstract String getImageUrl(String content);
+		public abstract String getImageUrl(String content, NewsListItem item);
 	}
 
 	@Override
@@ -356,7 +356,7 @@ public abstract class FetchFeedService extends Service {
 		return new Date().getTime();
 	}
 	
-	synchronized private NewsListItem fetchImage(NewsListItem item) { //OutOfMemory 対策として同期化した。
+	private NewsListItem fetchImage(NewsListItem item) { // //OutOfMemory 対策として同期化した。
 			String imageUrl = item.getImageUrl();
 			if (imageUrl == null || imageUrl.length() == 0) {
 				try {
@@ -364,7 +364,7 @@ public abstract class FetchFeedService extends Service {
 					String content = FileDownloader.download(item.getLink());
 					
 					final Feed feed = this.getFeed(item.getSource());
-					imageUrl = feed.getImageUrl(content);
+					imageUrl = feed.getImageUrl(content, item);
 					if (imageUrl == null) {
 						return item;
 					}

@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.starbug1.android.newsapp.FetchFeedService;
+import com.starbug1.android.newsapp.data.NewsListItem;
 
 public class AppFetchFeedService extends FetchFeedService {
 
@@ -18,14 +19,14 @@ public class AppFetchFeedService extends FetchFeedService {
 		feeds.add(new Feed("らばQ", "http://labaq.com/index.rdf") {
 
 			@Override
-			public String getImageUrl(String content) {
+			public String getImageUrl(String content, NewsListItem item) {
 				return null;
 			}
 			
 		});
 		feeds.add(new Feed("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf") {
 			@Override
-			public String getImageUrl(String content) {
+			public String getImageUrl(String content, NewsListItem item) {
 				return null;
 			}
 			
@@ -33,7 +34,7 @@ public class AppFetchFeedService extends FetchFeedService {
 		feeds.add(new Feed("GIGAZINE", "http://gigazine.net/news/rss_2.0/") {
 
 			@Override
-			public String getImageUrl(String content) {
+			public String getImageUrl(String content, NewsListItem item) {
 				Matcher m = gigagineContent_.matcher(content);
 				if (!m.find()) {
 					return null;

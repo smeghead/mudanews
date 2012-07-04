@@ -1,10 +1,7 @@
 package com.starbug1.android.newsapp;
 
-import com.starbug1.android.mudanews.R;
-import com.starbug1.android.mudanews.R.id;
-import com.starbug1.android.mudanews.R.layout;
-import com.starbug1.android.mudanews.R.xml;
 import com.starbug1.android.newsapp.utils.AppUtils;
+import com.starbug1.android.newsapp.utils.ResourceProxy.R;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -21,6 +18,7 @@ public class AppPrefActivity extends PreferenceActivity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		R.init(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.pref);
 		addPreferencesFromResource(R.xml.pref);

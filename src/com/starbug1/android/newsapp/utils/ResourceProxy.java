@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 
 import com.starbug1.android.newsapp.AppException;
 
+import android.content.Context;
 import android.util.Log;
 
 /**
@@ -33,6 +34,16 @@ public final class ResourceProxy {
 	
 	// 以下のクラスを経由して、自動生成されたクラスにアクセスする。
 	public static final class R {
+		public static void init(Context context) {
+			try {
+				String className = context.getPackageName() + ".R";
+				init(Class.forName(className));
+			} catch (Exception e) {
+				Log.e(TAG, e.toString());
+				throw new AppException("no class definetion. needs R class update?");
+			}
+		}
+		
 		public static void init(Class<?> resourceClass) {
 			try {
 				for (Class<?> c : resourceClass.getClasses()) {
@@ -70,6 +81,8 @@ public final class ResourceProxy {
 	        public static int arrays_entry_actions=0x7f060002;
 	        public static int arrays_pref_interval_values=0x7f060001;
 	        public static int arrays_pref_intervals=0x7f060000;
+	        public static int arrays_mobile_url_orgin=0x7f060004;
+	        public static int arrays_mobile_url_repleace=0x7f060005;
 	    }
 	    public static final class attr {
 	    }
