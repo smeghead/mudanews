@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.util.Log;
 
+import com.starbug1.android.newsapp.ActivityProcessAditional;
 import com.starbug1.android.newsapp.AppException;
 
 public class AppUtils {
@@ -53,5 +54,16 @@ public class AppUtils {
 			throw new AppException("failed to get service class.");
 		}
 		return serviceClass;
+	}
+	
+	public static void onCreateAditional(Activity activity) {
+		String aditionalClassName = activity.getPackageName() + ".AppActivityProcessAditional";
+		try {
+			Class<? extends ActivityProcessAditional> aditionalClass = (Class<? extends ActivityProcessAditional>) Class.forName(aditionalClassName);
+			ActivityProcessAditional aditional = aditionalClass.newInstance();
+			aditional.onCreateAditional(activity);
+		} catch (Exception e) {
+			Log.i(TAG, "no class:" + aditionalClassName);
+		}
 	}
 }

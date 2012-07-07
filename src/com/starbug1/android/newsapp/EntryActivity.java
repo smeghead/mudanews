@@ -131,6 +131,7 @@ public class EntryActivity extends Activity {
 
 		parappa_ = new PaRappa(this);
 
+		AppUtils.onCreateAditional(this);
 	}
 
 	@Override

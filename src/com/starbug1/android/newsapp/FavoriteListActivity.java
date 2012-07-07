@@ -37,6 +37,8 @@ public class FavoriteListActivity extends AbstractActivity {
 		task.execute();
 
 		parappa_ = new PaRappa(this);
+		
+		AppUtils.onCreateAditional(this);
 	}
 
 	@Override

@@ -161,6 +161,8 @@ public class MainActivity extends AbstractActivity {
 		manager.cancelAll();
 		
 		parappa_ = new PaRappa(this);
+		
+		AppUtils.onCreateAditional(this);
 	}
 
 	private NewsCollectTask task_ = null;

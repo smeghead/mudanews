@@ -63,6 +63,4 @@
         <!-- PaRappa Application Code Setting -->
         <meta-data android:name="PARAPPA_APP_CODE" android:value="pLvsV7y2"/>
     </application>
-    
-    <meta-data android:name="ADMOB_PUBLISHER_ID" android:value="a14edaf2bb22e23"/>
 </manifest>
