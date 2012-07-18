@@ -54,8 +54,6 @@ public class AppFetchFeedService extends FetchFeedService {
 	
 	@Override
 	public void onCreate() {
-		com.starbug1.android.newsapp.utils.ResourceProxy.R.init(R.class);
-
 		super.onCreate();
 	}
 }

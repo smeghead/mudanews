@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, MudanewsActivity!</string>
     <string name="app_name">無駄新聞</string>
     <string name="shareDescription">一番カジュアルなAndroid用 新聞アプリ\n http://goo.gl/c0j2H</string>
     <string name="initial_message">インストールありがとうございます。\n記事取得中です。\n少々お待ちください。\n(初回の記事取得は時間がかかります)</string>
