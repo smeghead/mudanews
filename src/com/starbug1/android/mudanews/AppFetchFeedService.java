@@ -10,8 +10,12 @@ import com.starbug1.android.newsapp.data.NewsListItem;
 
 public class AppFetchFeedService extends FetchFeedService {
 
-	private final Pattern imageUrl_ = Pattern.compile("<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
-	private final Pattern gigagineContent_ = Pattern.compile("class=\"preface\"(.*)$", Pattern.DOTALL);
+	private final Pattern imageUrl_ = Pattern.compile(
+			"<img.*?src=\"([^\"]*)\"", Pattern.MULTILINE);
+	private final Pattern imageOriginalUrl_ = Pattern.compile(
+			"<img.*?data-original=\"([^\"]*)\"", Pattern.MULTILINE);
+	private final Pattern gigagineContent_ = Pattern.compile(
+			"class=\"preface\"(.*)$", Pattern.DOTALL);
 
 	@Override
 	protected List<Feed> getFeeds() {
@@ -22,14 +26,15 @@ public class AppFetchFeedService extends FetchFeedService {
 			public String getImageUrl(String content, NewsListItem item) {
 				return null;
 			}
-			
+
 		});
-		feeds.add(new Feed("痛いニュース", "http://blog.livedoor.jp/dqnplus/index.rdf") {
+		feeds.add(new Feed("痛いニュース",
+				"http://blog.livedoor.jp/dqnplus/index.rdf") {
 			@Override
 			public String getImageUrl(String content, NewsListItem item) {
 				return null;
 			}
-			
+
 		});
 		feeds.add(new Feed("GIGAZINE", "http://gigazine.net/news/rss_2.0/") {
 
@@ -44,14 +49,22 @@ public class AppFetchFeedService extends FetchFeedService {
 				if (!m.find()) {
 					return null;
 				}
-				return m.group(1);
+				String imageUrl = m.group(1);
+				if (imageUrl.equals("http://gigazine.jp/images/1x3.png")) {
+					// gigazine で、メイン画像の遅延ロードをするようになったので、元の画像を取得するようにして対応する。
+					m = imageOriginalUrl_.matcher(mainPart);
+					if (m.find()) {
+						imageUrl = m.group(1);
+					}
+				}
+				return imageUrl;
 			}
-			
+
 		});
 
 		return feeds;
 	}
-	
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
