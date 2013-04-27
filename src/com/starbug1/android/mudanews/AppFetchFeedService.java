@@ -16,6 +16,8 @@ public class AppFetchFeedService extends FetchFeedService {
 			"<img.*?data-original=\"([^\"]*)\"", Pattern.MULTILINE);
 	private final Pattern gigagineContent_ = Pattern.compile(
 			"class=\"preface\"(.*)$", Pattern.DOTALL);
+	private final Pattern itaContent_ = Pattern.compile(
+			"class=\"main entry-content\"(.*)name=\"more\"", Pattern.DOTALL);
 
 	@Override
 	protected List<Feed> getFeeds() {
@@ -32,7 +34,17 @@ public class AppFetchFeedService extends FetchFeedService {
 				"http://blog.livedoor.jp/dqnplus/index.rdf") {
 			@Override
 			public String getImageUrl(String content, NewsListItem item) {
-				return null;
+				Matcher m = itaContent_.matcher(content);
+				if (!m.find()) {
+					return null;
+				}
+				String mainPart = m.group(1);
+				m = imageUrl_.matcher(mainPart);
+				if (!m.find()) {
+					return null;
+				}
+				String imageUrl = m.group(1);
+				return imageUrl;
 			}
 
 		});
